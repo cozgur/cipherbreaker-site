@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CipherBreaker — pure deduction, zero luck</title>
+<meta name="description" content="A four-digit code, feedback after every guess, and no luck anywhere. Play a round here, then get CipherBreaker free on iPhone.">
+<link rel="canonical" href="https://cipherbreaker.app/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CipherBreaker">
+<meta property="og:title" content="CipherBreaker — pure deduction, zero luck">
+<meta property="og:description" content="A four-digit code, feedback after every guess, and no luck anywhere. Crack one here, then play it free on iPhone.">
+<meta property="og:url" content="https://cipherbreaker.app/">
+<meta property="og:image" content="https://cipherbreaker.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="CipherBreaker: a four-digit code, 4 0 7 1, cracked in four guesses.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0a0b1e">
+<meta name="apple-itunes-app" content="app-id=6777961704">
+
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/chakrapetch-bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/jetbrainsmono-bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/inter-regular.woff2" as="font" type="font/woff2" crossorigin>
+
+<style>
+  /* ---- Brand faces, self-hosted and subset from the app's own TTFs ---- */
+  @font-face {
+    font-family: 'Chakra Petch';
+    src: url('assets/fonts/chakrapetch-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('assets/fonts/inter-regular.woff2') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('assets/fonts/inter-medium.woff2') format('woff2');
+    font-weight: 500; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('assets/fonts/inter-semibold.woff2') format('woff2');
+    font-weight: 600; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('assets/fonts/jetbrainsmono-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+
+  /* ---- Tokens: src/theme/tokens.ts, verbatim ---- */
+  :root {
+    --bg: #0a0b1e;
+    --elevated: #15172e;
+    --overlay: #1f2142;
+    --recess: #06071a;
+
+    --violet: #8b5cf6;
+    --violet-deep: #6d28d9;
+    --cyan: #06b6d4;
+    --pink: #ec4899;
+    --gold: #fbbf24;
+    --gold-deep: #d97706;
+    --success: #10b981;
+    --danger: #ef4444;
+
+    --text: #f5f5f7;
+    --text-2: #a1a1b5;
+    /* tokens.ts ships textDim #5a5a7a; at body size that lands under 3:1 on
+       this ground, so the dim role is lifted for text and the original value
+       kept for hairlines only. */
+    --text-3: #8f8fac;
+    --hairline: #2a2c54;
+
+    --r-tight: 8px;
+    --r: 16px;
+    --r-loose: 24px;
+
+    --display: 'Chakra Petch', 'Trebuchet MS', sans-serif;
+    --body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --pad: clamp(18px, 4.6vw, 40px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    /* The ground is not flat: the same violet bloom the share card carries,
+       anchored top-centre, plus a colder cyan wash at the foot of the page. */
+    background-image:
+      radial-gradient(120% 62% at 50% -12%, rgba(139, 92, 246, 0.26), transparent 68%),
+      radial-gradient(90% 40% at 50% 108%, rgba(6, 182, 212, 0.10), transparent 70%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  /* ---- Browser surfaces get the palette too ---- */
+  ::selection { background: rgba(139, 92, 246, 0.42); color: #fff; }
+  :focus-visible {
+    outline: 2px solid var(--violet);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  html { scrollbar-color: #3a3c6e var(--bg); scrollbar-width: thin; }
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb {
+    background: #3a3c6e;
+    border: 3px solid var(--bg);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: #4d4f8c; }
+
+  /* The token violet lands at 4.0:1 on the housing; links carry the lighter
+     step of the same hue so they clear AA without leaving the palette. */
+  a { color: #a78bfa; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: #c4b5fd; }
+
+  .skip {
+    position: absolute; left: -9999px; top: 0;
+    background: var(--overlay); color: var(--text);
+    padding: 12px 18px; border-radius: 0 0 var(--r-tight) 0; z-index: 20;
+  }
+  .skip:focus { left: 0; }
+
+  /* ================= THE CHASSIS =================
+     One machined housing holds the whole page. Sections are panels milled
+     into it, divided by hairlines and screw dots — not free-floating cards. */
+  .chassis {
+    max-width: 1080px;
+    margin: clamp(14px, 3vw, 44px) auto;
+    background: linear-gradient(178deg, #17193a 0%, #101128 42%, #0c0d22 100%);
+    border: 2px solid var(--hairline);
+    border-radius: clamp(18px, 3vw, 30px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.06) inset,
+      0 14px 26px -18px rgba(0, 0, 0, 0.92),
+      0 3px 8px -3px rgba(0, 0, 0, 0.6);
+    position: relative;
+    overflow: hidden;
+  }
+  /* Four machined screws, one per corner of the housing. */
+  .chassis::before,
+  .chassis::after,
+  .rail::before,
+  .rail::after {
+    content: '';
+    position: absolute;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 30%, #4a4c86, #1a1c3c 62%, #0d0e26);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+  }
+  .chassis::before { left: 14px; bottom: 14px; }
+  .chassis::after { right: 14px; bottom: 14px; }
+  .rail::before { left: 14px; top: 14px; }
+  .rail::after { right: 14px; top: 14px; }
+
+  .rail {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px var(--pad);
+    border-bottom: 1px solid var(--hairline);
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.09), transparent);
+  }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  /* The app's share card draws this mark as a flat violet-to-pink chip with no
+     halo; the site keeps it identical. */
+  .dot {
+    width: 22px; height: 22px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--violet), var(--pink));
+    flex: none;
+  }
+  .wordmark {
+    font-family: var(--display);
+    font-size: clamp(15px, 3.4vw, 19px);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .plate {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c4b5fd;
+    padding: 6px 11px;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.12);
+    border-radius: var(--r-tight);
+    white-space: nowrap;
+  }
+
+  .panel {
+    padding: clamp(30px, 6.4vw, 62px) var(--pad);
+    border-bottom: 1px solid var(--hairline);
+    position: relative;
+  }
+  .panel:last-of-type { border-bottom: 0; }
+
+  /* Etched panel label, milled into the housing above each panel's content. */
+  .etch {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .etch::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: linear-gradient(90deg, var(--hairline), transparent);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(33px, 8.4vw, 63px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+  h1 em { font-style: normal; color: #a78bfa; }
+  h2 {
+    font-family: var(--display);
+    font-size: clamp(24px, 5.2vw, 36px);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--display);
+    font-size: 19px;
+    letter-spacing: 0.02em;
+    margin: 0 0 6px;
+  }
+  .lede {
+    text-wrap: pretty;
+    font-size: clamp(17px, 2.2vw, 20px);
+    color: var(--text-2);
+    max-width: 62ch;
+    margin: 0 0 26px;
+  }
+  p { max-width: 68ch; text-wrap: pretty; }
+
+  /* ================= THE DISPLAY =================
+     A recessed window in the housing. Everything inside is the game. */
+  .hero {
+    display: grid;
+    gap: clamp(26px, 4vw, 46px);
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  @media (min-width: 900px) {
+    .hero { grid-template-columns: 1fr 396px; align-items: center; }
+  }
+
+  .display {
+    position: relative;
+    background: var(--recess);
+    border: 2px solid rgba(139, 92, 246, 0.32);
+    border-radius: var(--r-loose);
+    padding: 18px 16px 16px;
+    /* Recessed, so the light comes from INSIDE the glass (the bloom below),
+       never from a halo painted around the outside of the bezel. */
+    box-shadow:
+      0 3px 18px rgba(0, 0, 0, 0.7) inset,
+      0 0 0 1px rgba(0, 0, 0, 0.6),
+      0 10px 20px -14px rgba(0, 0, 0, 0.9);
+    overflow: hidden;
+  }
+  /* Bloom + fine grid: the display is lit from within, and it has a texture. */
+  .display::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 58% at 50% -6%, rgba(139, 92, 246, 0.3), transparent 62%),
+      repeating-linear-gradient(0deg, rgba(139, 92, 246, 0.05) 0 1px, transparent 1px 4px);
+    pointer-events: none;
+  }
+  .display > * { position: relative; }
+
+  .display-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 14px;
+  }
+  .turn { color: #c4b5fd; }
+
+  .ledger {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 172px;
+    margin-bottom: 16px;
+    justify-content: center;
+  }
+  .ledger-empty {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--text-3);
+    line-height: 1.7;
+    margin: 0;
+    align-self: center;
+    text-align: center;
+    padding: 0 8px;
+    max-width: 34ch;
+  }
+
+  .row { display: flex; align-items: center; gap: 8px; }
+  .tiles { display: flex; gap: 8px; }
+  #slots { width: 100%; gap: 10px; }
+  #slots .tile { flex: 1; width: auto; max-width: 84px; height: 64px; font-size: 27px; border-radius: 12px; }
+  .head-extra { display: none; }
+  @media (min-width: 420px) { .head-extra { display: inline; } }
+  .tile {
+    width: 44px; height: 52px;
+    display: grid; place-items: center;
+    font-family: var(--mono);
+    font-size: 22px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 10px;
+    background: rgba(21, 23, 46, 0.75);
+    color: var(--text-3);
+  }
+  .tile.exact {
+    border-color: var(--success);
+    color: #6ee7b7;
+    background: rgba(16, 185, 129, 0.14);
+  }
+  .tile.moved {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(251, 191, 36, 0.13);
+  }
+  .tile.absent { color: #8b8bad; }
+  .tile.live {
+    border-color: rgba(139, 92, 246, 0.55);
+    color: var(--text);
+    background: rgba(139, 92, 246, 0.1);
+  }
+  /* The caret's witness ring is an outline, not a shadow: a machined slot has
+     an edge, and a blurred halo would be a different material. */
+  .tile.caret {
+    border-color: var(--violet);
+    outline: 2px solid rgba(139, 92, 246, 0.32);
+    outline-offset: 1px;
+  }
+
+  .verdict {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-3);
+    margin-left: 4px;
+  }
+  .verdict b { color: var(--success); font-weight: 700; }
+  .verdict i { color: var(--gold); font-style: normal; }
+
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .key {
+    appearance: none;
+    font-family: var(--mono);
+    font-size: 19px;
+    color: var(--text);
+    padding: 15px 0;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #23254a, #191b38);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.07) inset,
+      0 2px 0 #0c0d20,
+      0 4px 10px rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+    transition: transform 90ms ease-out, box-shadow 90ms ease-out, background 90ms ease-out;
+  }
+  .key:hover { background: linear-gradient(180deg, #2a2c56, #1e2040); }
+  /* Real travel: the key sinks and its shadow collapses under it. */
+  .key:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 0 0 #0c0d20;
+  }
+  .key[disabled] { opacity: 0.4; cursor: not-allowed; }
+  .key-wide { grid-column: span 2; }
+  .key-go {
+    background: linear-gradient(180deg, #9b6ff8, var(--violet-deep));
+    border-color: #a78bfa;
+    font-family: var(--display);
+    letter-spacing: 0.16em;
+    font-size: 15px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.22) inset,
+      0 2px 0 #4c1d95,
+      0 6px 12px -6px rgba(0, 0, 0, 0.9);
+  }
+  .key-go:hover { background: linear-gradient(180deg, #a982fa, #7c3aed); }
+  .key-go[disabled] { background: linear-gradient(180deg, #2f3160, #23254a); border-color: var(--hairline); }
+  .key-icon { display: block; margin: 0 auto; }
+
+  .status {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-3);
+    margin: 12px 2px 0;
+    min-height: 2.6em;
+    line-height: 1.6;
+  }
+  .status.win { color: #6ee7b7; }
+  .status.lose { color: #fca5a5; }
+  .status.warn { color: var(--gold); }
+
+  /* ---- The console's primary key: the store lockup, mounted in a bezel ---- */
+  .cta {
+    margin: 26px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 20px;
+  }
+  /* The store lockup is mounted like a key in the console: a milled bezel with
+     real elevation, and it rises when you reach for it. Lighting is carried by
+     the bezel's own edge, not by a coloured halo behind it. */
+  .store {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 18px;
+    border-radius: var(--r);
+    background: linear-gradient(180deg, #23254c, #16182f);
+    border: 2px solid rgba(139, 92, 246, 0.55);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.12) inset,
+      0 8px 16px -8px rgba(0, 0, 0, 0.9);
+    transition: transform 140ms ease-out, box-shadow 140ms ease-out, border-color 140ms ease-out;
+  }
+  .store:hover {
+    transform: translateY(-2px);
+    border-color: #c4b5fd;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.16) inset,
+      0 14px 22px -10px rgba(0, 0, 0, 0.95);
+  }
+  .store:active { transform: translateY(0); }
+  .store img { display: block; width: 168px; height: auto; }
+  /* Cracked the code: the key's edge switches to the success colour, the same
+     signal the app's exact-position tiles use. */
+  .store.lit {
+    border-color: var(--success);
+    background: linear-gradient(180deg, #1b3b34, #14251f);
+  }
+  .fine {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-3);
+    line-height: 1.8;
+    margin: 0;
+  }
+
+  /* ================= READOUT PANEL ================= */
+  .readouts {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: 1fr;
+    margin-top: 8px;
+  }
+  @media (min-width: 760px) {
+    .readouts { grid-template-columns: 1fr 1fr; gap: 34px; }
+  }
+  .readout > p { color: var(--text-2); margin: 8px 0 16px; }
+  .worked {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--r);
+    background: rgba(6, 7, 26, 0.6);
+  }
+  .worked-line {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 12px;
+    color: var(--text-3);
+  }
+  .tile-sm { width: 34px; height: 40px; font-size: 17px; border-radius: 8px; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+    margin: 16px 0 0; padding: 0; list-style: none;
+    font-family: var(--mono); font-size: 12px;
+    color: var(--text-3);
+  }
+  .legend li { display: flex; align-items: center; gap: 8px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .swatch.exact { background: var(--success); }
+  .swatch.moved { background: var(--gold); }
+  .swatch.absent { background: #3a3c6e; }
+
+  /* ================= MODES: a selector rail ================= */
+  .rail-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 26px;
+    position: relative;
+  }
+  /* The rail itself: one continuous line with a stop at every mode. */
+  .rail-list::before {
+    content: '';
+    position: absolute;
+    left: 5px; top: 12px; bottom: 12px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--violet), rgba(6, 182, 212, 0.6));
+    border-radius: 2px;
+  }
+  /* Two rows on a phone (name + stake, then the description), three aligned
+     columns from 720px up. A wrapping flex row put BLITZ's description beside
+     its name and everyone else's underneath — the grid removes that lottery. */
+  .stop {
+    position: relative;
+    padding: 15px 0;
+    border-bottom: 1px dashed rgba(42, 44, 84, 0.85);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 4px 14px;
+  }
+  .stop-name { grid-column: 1; grid-row: 1; }
+  .stop-right { grid-column: 2; grid-row: 1; }
+  .stop-desc { grid-column: 1 / -1; grid-row: 2; }
+  @media (min-width: 720px) {
+    .stop { grid-template-columns: 172px 1fr auto; }
+    .stop-desc { grid-column: 2; grid-row: 1; }
+    .stop-right { grid-column: 3; grid-row: 1; }
+  }
+  .stop:last-child { border-bottom: 0; }
+  .stop::before {
+    content: '';
+    position: absolute;
+    left: -26px; top: 22px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--violet);
+    outline: 2px solid rgba(139, 92, 246, 0.2);
+    outline-offset: 1px;
+  }
+  .stop-name {
+    font-family: var(--display);
+    font-size: 17px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .stop-desc { color: var(--text-2); margin: 0; font-size: 15.5px; max-width: 46ch; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .tag.timed { color: var(--gold); border-color: rgba(251, 191, 36, 0.45); background: rgba(251, 191, 36, 0.1); }
+  .tag.prestige { color: #f9a8d4; border-color: rgba(236, 72, 153, 0.45); background: rgba(236, 72, 153, 0.1); }
+  .tag.risk { color: #fca5a5; border-color: rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.1); }
+  /* Tags and stakes share one right-hand column so they line up down the rail
+     instead of drifting with each description's length. */
+  .stop-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex: none;
+  }
+  .stake {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--gold);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 52px;
+    justify-content: flex-end;
+  }
+  .stake svg { flex: none; }
+
+  /* ================= DAILY ================= */
+  .daily {
+    display: grid;
+    gap: 22px;
+    grid-template-columns: 1fr;
+    align-items: center;
+  }
+  @media (min-width: 820px) {
+    .daily { grid-template-columns: 1.2fr 0.8fr; gap: 42px; }
+  }
+  .banner {
+    border: 1px solid rgba(139, 92, 246, 0.42);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 7, 26, 0.5));
+    border-radius: var(--r);
+    padding: 20px;
+  }
+  .banner h3 { margin-bottom: 8px; }
+  .banner-meta {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #c4b5fd;
+    margin: 0;
+  }
+
+  /* ================= PROOF: mounted plates ================= */
+  .plates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: clamp(16px, 3vw, 30px);
+    margin-top: 6px;
+  }
+  figure { margin: 0; }
+  .bezel {
+    padding: 9px;
+    border: 2px solid var(--hairline);
+    border-radius: 20px;
+    background: linear-gradient(180deg, #1c1e40, #101228);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07) inset, 0 10px 18px -12px rgba(0, 0, 0, 0.9);
+  }
+  .bezel img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 13px;
+    background: var(--recess);
+  }
+  figcaption {
+    font-size: 14.5px;
+    color: var(--text-2);
+    margin-top: 12px;
+  }
+  figcaption b {
+    display: block;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  /* ================= CLOSE + FOOTER ================= */
+  .close { text-align: center; }
+  .close h2 { max-width: 22ch; margin-inline: auto; }
+  .close .lede { margin-inline: auto; }
+  .close .cta { justify-content: center; }
+
+  footer {
+    padding: 22px var(--pad);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 22px;
+    border-top: 1px solid var(--hairline);
+    background: rgba(6, 7, 26, 0.45);
+  }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+    margin: 0; padding: 0; list-style: none;
+    font-size: 14.5px;
+  }
+  .links a { color: var(--text-2); text-decoration: none; }
+  .links a:hover { color: var(--text); text-decoration: underline; }
+  .foot-url {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: lowercase;
+    color: #a78bfa;
+  }
+
+  /* ================= THE ONE AUTHORED MOMENT =================
+     The display powers up: the bloom lifts, one scanline sweeps the glass,
+     and the four slots settle. Nothing else on the page animates on load. */
+  .sweep {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 42%;
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.22), transparent);
+    transform: translateY(-100%);
+    pointer-events: none;
+  }
+  .booting .sweep { animation: sweep 1150ms cubic-bezier(0.16, 1, 0.3, 1) 120ms 1; }
+  @keyframes sweep {
+    0% { transform: translateY(-100%); opacity: 0; }
+    18% { opacity: 1; }
+    100% { transform: translateY(340%); opacity: 0; }
+  }
+  .booting .tile.live { animation: settle 520ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .booting .tile.live:nth-child(2) { animation-delay: 70ms; }
+  .booting .tile.live:nth-child(3) { animation-delay: 140ms; }
+  .booting .tile.live:nth-child(4) { animation-delay: 210ms; }
+  @keyframes settle {
+    from { transform: translateY(-7px); filter: blur(4px); opacity: 0; }
+    to { transform: none; filter: none; opacity: 1; }
+  }
+  .flip { animation: flip 260ms ease-out both; }
+  @keyframes flip {
+    0% { transform: rotateX(-90deg); }
+    100% { transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .booting .sweep, .booting .tile.live, .flip { animation: none !important; }
+    .key, .store { transition: none; }
+  }
+
+  .sr {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+
+<!--
+  DIRECTION CONTRACT — surface: cipherbreaker.app landing page (Persuade)
+  THESIS: the destination every share card has been printing for months is a
+  machine you can operate, not a brochure about one; it refuses the stacked
+  hero-plus-feature-cards arrangement this category ships by default.
+  OWN-WORLD: the app's own Neo-Noir Casino Arcade tokens — #0a0b1e ground,
+  violet #8b5cf6 bloom, gold #fbbf24 stakes, Chakra Petch display, JetBrains
+  Mono for every numeral — assembled as ONE milled housing: corner screws,
+  etched mono panel labels, hairline-divided panels, keys with real travel,
+  a recessed lit display, and screenshots mounted behind bezels.
+  STORY: someone holding a friend's result card learns what this is in one
+  line, cracks a real code in the display with the app's own evaluator, and
+  taps the store lockup mounted in the console.
+  FIRST VIEWPORT: top rail (violet-pink logo dot, tracked wordmark, mono
+  FREE-ON-IPHONE plate); h1 three short lines left; the recessed display on
+  the right at 388px holding the guess ledger, live slots and keypad; the
+  store lockup directly beneath the headline, lit green the moment a visitor
+  cracks the code.
+  FORM: instrument panel — candidate 6 of my 7 ordered structures, the roll's
+  lead (seed cb8e23e1, dealt 6/2/4).
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the
+  finish review, the verdict, DESIGN.md, and every shipping raster carrying
+  its provenance.
+-->
+
+<a class="skip" href="#play">Skip to the playable round</a>
+
+<div class="chassis">
+  <header class="rail">
+    <div class="brand">
+      <div class="dot" aria-hidden="true"></div>
+      <p class="wordmark">CIPHERBREAKER</p>
+    </div>
+    <p class="plate">FREE · IPHONE</p>
+  </header>
+
+  <main id="main">
+    <section class="panel" aria-labelledby="h1">
+      <div class="hero">
+        <div>
+          <h1 id="h1">Four digits.<br>Ten guesses.<br><em>No luck involved.</em></h1>
+          <p class="lede">
+            Every code can be cracked by logic alone: read the feedback, eliminate
+            the impossible, close in. The display runs the app's own evaluator,
+            so the round below is the real thing.
+          </p>
+          <div class="cta">
+            <a class="store" id="store-top" href="https://apps.apple.com/app/id6777961704">
+              <img src="assets/appstore-badge.svg" width="168" height="56"
+                   alt="Download CipherBreaker on the App Store">
+            </a>
+            <p class="fine">
+              Free · iPhone, iOS 15.1+<br>No account, no sign-up
+            </p>
+          </div>
+        </div>
+
+        <!-- ===== The display ===== -->
+        <div class="display booting" id="play">
+          <div class="sweep" aria-hidden="true"></div>
+          <div class="display-head">
+            <span>COLOR MATCH<span class="head-extra"> · 4 DIGITS</span></span>
+            <span class="turn" id="turn">GUESS #1 / 10</span>
+          </div>
+
+          <div class="ledger" id="ledger">
+            <p class="ledger-empty" id="ledger-empty">
+              Four digits are loaded.<br>Repeats allowed. Ten tries.
+            </p>
+          </div>
+
+          <div class="row" style="margin-bottom:14px">
+            <div class="tiles" id="slots" role="group" aria-label="Your guess">
+              <div class="tile live caret" id="s0" aria-hidden="true">–</div>
+              <div class="tile live" id="s1" aria-hidden="true">–</div>
+              <div class="tile live" id="s2" aria-hidden="true">–</div>
+              <div class="tile live" id="s3" aria-hidden="true">–</div>
+            </div>
+          </div>
+
+          <div class="keypad" id="keypad">
+            <button class="key" type="button" data-d="1">1</button>
+            <button class="key" type="button" data-d="2">2</button>
+            <button class="key" type="button" data-d="3">3</button>
+            <button class="key" type="button" data-d="4">4</button>
+            <button class="key" type="button" data-d="5">5</button>
+            <button class="key" type="button" data-d="6">6</button>
+            <button class="key" type="button" data-d="7">7</button>
+            <button class="key" type="button" data-d="8">8</button>
+            <button class="key" type="button" data-d="9">9</button>
+            <button class="key" type="button" data-d="0">0</button>
+            <button class="key" type="button" id="del" aria-label="Delete last digit">
+              <svg class="key-icon" width="22" height="16" viewBox="0 0 22 16" fill="none"
+                   stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+                <path d="M7 1.8h12.4a1 1 0 0 1 1 1v10.4a1 1 0 0 1-1 1H7L1.4 8z"/>
+                <path d="M11.4 5.6l4.8 4.8M16.2 5.6l-4.8 4.8"/>
+              </svg>
+            </button>
+            <button class="key key-go" type="button" id="go" disabled>GUESS</button>
+          </div>
+
+          <p class="status" id="status" role="status" aria-live="polite">
+            10,000 codes are possible. Deduction is how you cut them down.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="readout-h">
+      <p class="etch">HOW THE READOUT WORKS</p>
+      <h2 id="readout-h">Feedback is the whole game</h2>
+      <p class="lede">
+        Two of the classic modes report the same truth in different languages.
+        One paints it. One counts it.
+      </p>
+
+      <div class="readouts">
+        <div class="readout">
+          <h3>COLOR MATCH</h3>
+          <p>Green sits in the right slot. Gold is the right digit in the wrong slot. Grey is not in the code.</p>
+          <div class="worked">
+            <div class="worked-line">
+              <span>CODE</span>
+              <span class="tiles">
+                <span class="tile tile-sm">1</span><span class="tile tile-sm">1</span>
+                <span class="tile tile-sm">2</span><span class="tile tile-sm">2</span>
+              </span>
+            </div>
+            <div class="worked-line">
+              <span>GUESS</span>
+              <span class="tiles">
+                <span class="tile tile-sm exact">1</span><span class="tile tile-sm absent">9</span>
+                <span class="tile tile-sm moved">1</span><span class="tile tile-sm absent">9</span>
+              </span>
+            </div>
+          </div>
+          <ul class="legend">
+            <li><span class="swatch exact" aria-hidden="true"></span>right slot</li>
+            <li><span class="swatch moved" aria-hidden="true"></span>wrong slot</li>
+            <li><span class="swatch absent" aria-hidden="true"></span>not in code</li>
+          </ul>
+        </div>
+
+        <div class="readout">
+          <h3>PRECISION</h3>
+          <p>No colours. Two numbers: how many digits are exactly right, and how many are right but misplaced. Digits never repeat, so 5,040 codes are in play.</p>
+          <div class="worked">
+            <div class="worked-line">
+              <span>CODE</span>
+              <span class="tiles">
+                <span class="tile tile-sm">1</span><span class="tile tile-sm">2</span>
+                <span class="tile tile-sm">3</span><span class="tile tile-sm">4</span>
+              </span>
+            </div>
+            <div class="worked-line">
+              <span>GUESS</span>
+              <span class="tiles">
+                <span class="tile tile-sm">1</span><span class="tile tile-sm">2</span>
+                <span class="tile tile-sm">4</span><span class="tile tile-sm">9</span>
+              </span>
+              <span class="verdict"><b>+2</b> <i>−1</i></span>
+            </div>
+          </div>
+          <p class="fine" style="margin-top:16px">
+            Two digits nailed. One digit present, wrong slot. One not in the code at all.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="modes-h">
+      <p class="etch">SEVEN MODES · ONE MECHANIC</p>
+      <h2 id="modes-h">The same deduction, made harder seven ways</h2>
+      <p class="lede">
+        Each mode changes what the code tells you, or what it costs to be wrong.
+        Matches are staked in tokens — win and you take the pot.
+      </p>
+      <ul class="rail-list">
+        <li class="stop">
+          <h3 class="stop-name">COLOR MATCH</h3>
+          <p class="stop-desc">Green, yellow, gray — Wordle-style feedback.</p>
+          <span class="stop-right">
+            <span class="stake"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.5"/><path d="M8.7 4.7a2.7 2.7 0 1 0 0 3.6" stroke-linecap="round"/></svg>50<span class="sr"> tokens staked</span></span>
+          </span>
+        </li>
+        <li class="stop">
+          <h3 class="stop-name">HIGH &amp; LOW</h3>
+          <p class="stop-desc">One hint: is the secret higher or lower?</p>
+          <span class="stop-right">
+            <span class="stake"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.5"/><path d="M8.7 4.7a2.7 2.7 0 1 0 0 3.6" stroke-linecap="round"/></svg>50<span class="sr"> tokens staked</span></span>
+          </span>
+        </li>
+        <li class="stop">
+          <h3 class="stop-name">PRECISION</h3>
+          <p class="stop-desc">+1 for right spot, −1 for wrong spot.</p>
+          <span class="stop-right">
+            <span class="stake"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.5"/><path d="M8.7 4.7a2.7 2.7 0 1 0 0 3.6" stroke-linecap="round"/></svg>50<span class="sr"> tokens staked</span></span>
+          </span>
+        </li>
+        <li class="stop">
+          <h3 class="stop-name">BLITZ</h3>
+          <p class="stop-desc">Chess clock. 60 seconds each. Don't flag.</p>
+          <span class="stop-right">
+            <span class="tag timed">TIMED</span>
+            <span class="stake"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.5"/><path d="M8.7 4.7a2.7 2.7 0 1 0 0 3.6" stroke-linecap="round"/></svg>50<span class="sr"> tokens staked</span></span>
+          </span>
+        </li>
+        <li class="stop">
+          <h3 class="stop-name">BLACKOUT</h3>
+          <p class="stop-desc">Only locked-in digits revealed. High stakes.</p>
+          <span class="stop-right">
+            <span class="tag prestige">PRESTIGE</span>
+            <span class="stake"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.5"/><path d="M8.7 4.7a2.7 2.7 0 1 0 0 3.6" stroke-linecap="round"/></svg>100<span class="sr"> tokens staked</span></span>
+          </span>
+        </li>
+        <li class="stop">
+          <h3 class="stop-name">SUDDEN DEATH</h3>
+          <p class="stop-desc">Five guesses. No second chances.</p>
+          <span class="stop-right">
+            <span class="tag risk">HIGH RISK</span>
+            <span class="stake"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.5"/><path d="M8.7 4.7a2.7 2.7 0 1 0 0 3.6" stroke-linecap="round"/></svg>50<span class="sr"> tokens staked</span></span>
+          </span>
+        </li>
+        <li class="stop">
+          <h3 class="stop-name">MIRROR</h3>
+          <p class="stop-desc">Same code, different minds. First to crack wins.</p>
+          <span class="stop-right">
+            <span class="stake"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.5"/><path d="M8.7 4.7a2.7 2.7 0 1 0 0 3.6" stroke-linecap="round"/></svg>50<span class="sr"> tokens staked</span></span>
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="panel" aria-labelledby="daily-h">
+      <p class="etch">THE DAILY</p>
+      <div class="daily">
+        <div>
+          <h2 id="daily-h">One puzzle a day, and a streak you will not want to break</h2>
+          <p class="lede" style="margin-bottom:0">
+            The Daily is four digits and ten guesses. Solve it, keep the streak,
+            and the result card you share is the reason you are reading this page.
+          </p>
+        </div>
+        <div class="banner">
+          <h3>Today's puzzle</h3>
+          <p class="banner-meta" id="daily-meta">4 digits · 10 guesses · resets every day</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="proof-h">
+      <p class="etch">FROM THE APP</p>
+      <h2 id="proof-h">What the deduction looks like on a phone</h2>
+      <div class="plates">
+        <figure>
+          <div class="bezel">
+            <img src="assets/shots/home.webp" width="540" height="1173" loading="lazy" decoding="async"
+                 alt="CipherBreaker's home screen: today's puzzle banner above the seven modes, each with its token stake.">
+          </div>
+          <figcaption><b>THE BOARD</b>Today's puzzle on top, then every mode with what a match stakes.</figcaption>
+        </figure>
+        <figure>
+          <div class="bezel">
+            <img src="assets/shots/match.webp" width="540" height="1173" loading="lazy" decoding="async"
+                 alt="A CipherBreaker duel in Color Match: two players' guess rows with green, gold and grey digit tiles, a keypad below.">
+          </div>
+          <figcaption><b>A DUEL</b>Turn by turn against an opponent, both reading the same feedback.</figcaption>
+        </figure>
+        <figure>
+          <div class="bezel">
+            <img src="assets/shots/review.webp" width="540" height="1173" loading="lazy" decoding="async"
+                 alt="CipherBreaker's deduction review screen, grading the guesses of a finished round.">
+          </div>
+          <figcaption><b>DEDUCTION REVIEW</b>After the round, every guess you made gets graded.</figcaption>
+        </figure>
+        <figure>
+          <div class="bezel">
+            <img src="assets/shots/victory.webp" width="540" height="1173" loading="lazy" decoding="async"
+                 alt="A CipherBreaker victory screen with the cracked code and the result card to share.">
+          </div>
+          <figcaption><b>THE CARD</b>Crack it and the result card is one tap from anywhere.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="panel close" aria-labelledby="close-h">
+      <h2 id="close-h">Find out how sharp you really are</h2>
+      <p class="lede">Free, no account, and the first code is already waiting.</p>
+      <div class="cta">
+        <a class="store" href="https://apps.apple.com/app/id6777961704">
+          <img src="assets/appstore-badge.svg" width="168" height="56"
+               alt="Download CipherBreaker on the App Store">
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <ul class="links">
+      <li><a href="https://apps.apple.com/app/id6777961704">App Store</a></li>
+      <li><a href="https://cozgur.github.io/cipherbreaker-privacy/">Privacy policy</a></li>
+      <li><a href="mailto:ozgur.cetintas@yahoo.com">Support</a></li>
+    </ul>
+    <p class="foot-url">cipherbreaker.app</p>
+  </footer>
+</div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "MobileApplication",
+  "name": "CipherBreaker: Pure Deduction",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "iOS 15.1 or later",
+  "url": "https://cipherbreaker.app/",
+  "installUrl": "https://apps.apple.com/app/id6777961704",
+  "image": "https://cipherbreaker.app/assets/og.png",
+  "description": "A pure deduction game with zero luck: crack a hidden code from the feedback after every guess, across seven modes, a daily challenge and 1v1 duels.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------
+     The playable round. Color Match (the app's Mode 1): four digits,
+     repeats allowed, Wordle-style two-pass feedback. The evaluator is a
+     direct port of src/game/modes/mode1/evaluate.ts — pass one paints
+     exact positions and consumes the secret slot, pass two paints a
+     digit gold only if it survives in an unconsumed slot. Getting this
+     wrong would teach visitors a rule the app does not play by.
+  --------------------------------------------------------------- */
+  var LEN = 4;
+  var MAX_TURNS = 10;
+
+  var slots = [0, 1, 2, 3].map(function (i) { return document.getElementById('s' + i); });
+  var ledger = document.getElementById('ledger');
+  var ledgerEmpty = document.getElementById('ledger-empty');
+  var statusEl = document.getElementById('status');
+  var turnEl = document.getElementById('turn');
+  var goBtn = document.getElementById('go');
+  var delBtn = document.getElementById('del');
+  var display = document.getElementById('play');
+  var storeTop = document.getElementById('store-top');
+
+  var secret = newSecret();
+  var entry = [];
+  var turn = 1;
+  var over = false;
+
+  function newSecret() {
+    var s = '';
+    for (var i = 0; i < LEN; i += 1) s += String(Math.floor(Math.random() * 10));
+    return s;
+  }
+
+  function evaluate(guess) {
+    var states = ['absent', 'absent', 'absent', 'absent'];
+    var used = [false, false, false, false];
+    var i, j;
+    for (i = 0; i < LEN; i += 1) {
+      if (guess[i] === secret[i]) { states[i] = 'exact'; used[i] = true; }
+    }
+    for (i = 0; i < LEN; i += 1) {
+      if (states[i] === 'exact') continue;
+      for (j = 0; j < LEN; j += 1) {
+        if (used[j]) continue;
+        if (guess[i] === secret[j]) { states[i] = 'moved'; used[j] = true; break; }
+      }
+    }
+    return states;
+  }
+
+  function paintEntry() {
+    slots.forEach(function (el, i) {
+      var d = entry[i];
+      el.textContent = d === undefined ? '–' : d;
+      el.className = 'tile live' + (i === entry.length && !over ? ' caret' : '');
+    });
+    goBtn.disabled = over || entry.length !== LEN;
+    delBtn.disabled = over || entry.length === 0;
+  }
+
+  function say(text, kind) {
+    statusEl.textContent = text;
+    statusEl.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  function pushRow(guess, states) {
+    if (ledgerEmpty && ledgerEmpty.parentNode) ledgerEmpty.parentNode.removeChild(ledgerEmpty);
+    var exact = states.filter(function (s) { return s === 'exact'; }).length;
+    var moved = states.filter(function (s) { return s === 'moved'; }).length;
+
+    var row = document.createElement('div');
+    row.className = 'row';
+    var tiles = document.createElement('div');
+    tiles.className = 'tiles';
+    states.forEach(function (state, i) {
+      var t = document.createElement('div');
+      t.className = 'tile ' + state + ' flip';
+      t.style.animationDelay = (i * 55) + 'ms';
+      t.textContent = guess[i];
+      tiles.appendChild(t);
+    });
+    row.appendChild(tiles);
+
+    var v = document.createElement('span');
+    v.className = 'verdict';
+    v.innerHTML = '<b>' + exact + ' exact</b> · <i>' + moved + ' moved</i>';
+    row.appendChild(v);
+    ledger.appendChild(row);
+    ledger.scrollTop = ledger.scrollHeight;
+    return exact;
+  }
+
+  function finish(won) {
+    over = true;
+    goBtn.disabled = true;
+    delBtn.disabled = true;
+    slots.forEach(function (el) { el.className = 'tile live'; });
+    document.querySelectorAll('#keypad .key[data-d]').forEach(function (k) { k.disabled = true; });
+
+    if (won) {
+      var used = turn - 1;
+      // A crack inside two guesses IS luck, and this page's whole claim is that
+      // the game has none in it. Saying otherwise would undercut the thesis on
+      // the one screen where the visitor is paying attention.
+      say(used <= 2
+        ? 'Cracked in ' + used + '. That one was luck — 10,000 codes and you walked into it. The app will make you earn the next one.'
+        : 'Cracked in ' + used + '. That was reasoning, not luck, and Color Match is the mode that shows you the most. Six more get stingier.',
+      'win');
+      storeTop.className = 'store lit';
+    } else {
+      say('Out of guesses. The code was ' + secret + '. The app gives you a fresh one every day.', 'lose');
+    }
+
+    var again = document.createElement('button');
+    again.type = 'button';
+    again.className = 'key key-wide';
+    again.style.marginTop = '10px';
+    again.style.gridColumn = '1 / -1';
+    again.textContent = 'NEW CODE';
+    again.addEventListener('click', reset);
+    document.getElementById('keypad').appendChild(again);
+    againBtn = again;
+  }
+
+  var againBtn = null;
+
+  function reset() {
+    if (againBtn && againBtn.parentNode) againBtn.parentNode.removeChild(againBtn);
+    againBtn = null;
+    secret = newSecret();
+    entry = [];
+    turn = 1;
+    over = false;
+    while (ledger.firstChild) ledger.removeChild(ledger.firstChild);
+    ledger.appendChild(ledgerEmpty);
+    document.querySelectorAll('#keypad .key[data-d]').forEach(function (k) { k.disabled = false; });
+    turnEl.textContent = 'GUESS #1 / ' + MAX_TURNS;
+    storeTop.className = 'store';
+    say('New code loaded. Same rules.', null);
+    paintEntry();
+  }
+
+  function submit() {
+    if (over || entry.length !== LEN) return;
+    var guess = entry.join('');
+    var states = evaluate(guess);
+    var exact = pushRow(guess, states);
+    entry = [];
+    turn += 1;
+
+    if (exact === LEN) { finish(true); return; }
+    if (turn > MAX_TURNS) { finish(false); return; }
+
+    turnEl.textContent = 'GUESS #' + turn + ' / ' + MAX_TURNS;
+    if (turn === MAX_TURNS) say('Last guess. Make it count.', 'warn');
+    else say('Every grey digit is nine codes fewer. Keep cutting.', null);
+    paintEntry();
+  }
+
+  function typeDigit(d) {
+    if (over || entry.length >= LEN) return;
+    entry.push(d);
+    paintEntry();
+  }
+
+  document.getElementById('keypad').addEventListener('click', function (e) {
+    var btn = e.target.closest('button');
+    if (!btn) return;
+    if (btn.dataset.d !== undefined) { typeDigit(btn.dataset.d); return; }
+    if (btn.id === 'del') { entry.pop(); paintEntry(); return; }
+    if (btn.id === 'go') submit();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (e.key >= '0' && e.key <= '9') { typeDigit(e.key); e.preventDefault(); return; }
+    if (e.key === 'Backspace') { if (!over) { entry.pop(); paintEntry(); } e.preventDefault(); return; }
+    if (e.key === 'Enter' && entry.length === LEN) { submit(); e.preventDefault(); }
+  });
+
+  paintEntry();
+
+  /* The single authored moment: let the display finish powering up, then
+     drop the boot class so nothing re-animates on later interaction. */
+  window.setTimeout(function () { display.classList.remove('booting'); }, 1500);
+
+  /* ---------------------------------------------------------------
+     The Daily's public identity. The app still derives each player's day
+     number from their own first Daily, so a global "Day #N" printed here
+     would contradict every card in circulation. The rule below is the
+     locked global one (2026-08-12 epoch, mode rotation by day index);
+     it stays dark until the app ships it. One flag, one truth.
+  --------------------------------------------------------------- */
+  var GLOBAL_DAILY_LIVE = false;
+  var EPOCH_UTC = Date.UTC(2026, 7, 12);
+  var MODE_ROTATION = ['COLOR MATCH', 'PRECISION', 'HIGH & LOW'];
+
+  if (GLOBAL_DAILY_LIVE) {
+    var now = new Date();
+    var todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    var dayIndex = Math.floor((todayUTC - EPOCH_UTC) / 86400000) + 1;
+    var mode = MODE_ROTATION[dayIndex % 3];
+    document.getElementById('daily-meta').textContent =
+      'Day #' + dayIndex + ' · ' + mode + ' · 4 digits · 10 guesses';
+  }
+})();
+</script>
+</body>
+</html>
