@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support — CipherBreaker</title>
+<meta name="description" content="Help with CipherBreaker: where your progress lives, restoring purchases, how hints are priced, and how to reach a human.">
+<link rel="canonical" href="https://cipherbreaker.app/support/">
+<meta name="theme-color" content="#0a0b1e">
+<meta name="robots" content="index,follow">
+
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="preload" href="../assets/fonts/chakrapetch-bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/inter-regular.woff2" as="font" type="font/woff2" crossorigin>
+
+<style>
+  /* Same three faces and the same tokens the home page ships. This page keeps
+     its own trimmed style block rather than sharing a stylesheet: the home page
+     is live and verified, and a second page is not worth reopening it for. If a
+     third page arrives, extract the tokens and the chassis into one file. */
+  @font-face {
+    font-family: 'Chakra Petch';
+    src: url('../assets/fonts/chakrapetch-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('../assets/fonts/inter-regular.woff2') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('../assets/fonts/inter-medium.woff2') format('woff2');
+    font-weight: 500; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../assets/fonts/jetbrainsmono-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+
+  :root {
+    --bg: #0a0b1e;
+    --violet: #8b5cf6;
+    --pink: #ec4899;
+    --gold: #fbbf24;
+    --text: #f5f5f7;
+    --text-2: #a1a1b5;
+    --text-3: #8f8fac;
+    --hairline: #2a2c54;
+    --display: 'Chakra Petch', 'Trebuchet MS', sans-serif;
+    --body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --pad: clamp(18px, 4.6vw, 40px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(120% 55% at 50% -14%, rgba(139, 92, 246, 0.22), transparent 68%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  ::selection { background: rgba(139, 92, 246, 0.42); color: #fff; }
+  :focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; border-radius: 4px; }
+  html { scrollbar-color: #3a3c6e var(--bg); scrollbar-width: thin; }
+  ::-webkit-scrollbar { width: 11px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #3a3c6e; border: 3px solid var(--bg); border-radius: 999px; }
+
+  a { color: #a78bfa; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: #c4b5fd; }
+
+  .chassis {
+    max-width: 760px;
+    margin: clamp(14px, 3vw, 44px) auto;
+    background: linear-gradient(178deg, #17193a 0%, #101128 42%, #0c0d22 100%);
+    border: 2px solid var(--hairline);
+    border-radius: clamp(18px, 3vw, 30px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.06) inset,
+      0 14px 26px -18px rgba(0, 0, 0, 0.92);
+    position: relative;
+    overflow: hidden;
+  }
+  .rail {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px var(--pad);
+    border-bottom: 1px solid var(--hairline);
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.09), transparent);
+  }
+  .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--text); }
+  .dot {
+    width: 22px; height: 22px; border-radius: 7px; flex: none;
+    background: linear-gradient(135deg, var(--violet), var(--pink));
+  }
+  .wordmark {
+    font-family: var(--display);
+    font-size: clamp(15px, 3.4vw, 19px);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .plate {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c4b5fd;
+    padding: 6px 11px;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.12);
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  .panel {
+    padding: clamp(26px, 5.4vw, 48px) var(--pad);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .panel:last-of-type { border-bottom: 0; }
+
+  .etch {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .etch::after {
+    content: '';
+    height: 1px; flex: 1;
+    background: linear-gradient(90deg, var(--hairline), transparent);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(30px, 7vw, 46px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 16px;
+  }
+  h2 {
+    font-family: var(--display);
+    font-size: 19px;
+    letter-spacing: 0.02em;
+    margin: 0 0 8px;
+  }
+  p { max-width: 66ch; text-wrap: pretty; }
+  .lede { font-size: clamp(17px, 2.2vw, 19px); color: var(--text-2); margin: 0 0 22px; }
+
+  .contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 15px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    border: 2px solid rgba(139, 92, 246, 0.55);
+    background: linear-gradient(180deg, #23254c, #16182f);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 8px 16px -8px rgba(0, 0, 0, 0.9);
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 140ms ease-out, border-color 140ms ease-out;
+  }
+  .contact:hover { transform: translateY(-2px); border-color: #c4b5fd; color: var(--text); }
+
+  .faq { margin: 0; padding: 0; }
+  .faq > div {
+    padding: 18px 0;
+    border-bottom: 1px dashed rgba(42, 44, 84, 0.85);
+  }
+  .faq > div:last-child { border-bottom: 0; }
+  .faq p { color: var(--text-2); margin: 0; }
+  .faq p + p { margin-top: 8px; }
+
+  footer {
+    padding: 20px var(--pad);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 22px;
+    border-top: 1px solid var(--hairline);
+    background: rgba(6, 7, 26, 0.45);
+  }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+    margin: 0; padding: 0; list-style: none; font-size: 14.5px;
+  }
+  .links a { color: var(--text-2); text-decoration: none; }
+  .links a:hover { color: var(--text); text-decoration: underline; }
+  .foot-url { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: #a78bfa; }
+</style>
+</head>
+<body>
+
+<div class="chassis">
+  <header class="rail">
+    <a class="brand" href="../">
+      <div class="dot" aria-hidden="true"></div>
+      <p class="wordmark">CipherBreaker</p>
+    </a>
+    <p class="plate">Support</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h1>Something wrong? Ask a person.</h1>
+      <p class="lede">
+        CipherBreaker is made by one developer. Email is the only support channel,
+        and it reaches me directly — there is no ticket queue in between.
+      </p>
+      <a class="contact" href="mailto:ozgur.cetintas@yahoo.com?subject=CipherBreaker%20Support">
+        ozgur.cetintas@yahoo.com
+      </a>
+      <p style="color:var(--text-3);font-size:14.5px;margin-top:16px">
+        It helps to include your iPhone model, the iOS version, and what you were
+        doing when it went wrong. A screenshot helps more than either.
+      </p>
+    </section>
+
+    <section class="panel">
+      <p class="etch">Answers to the common ones</p>
+      <div class="faq">
+        <div>
+          <h2>Where is my progress stored?</h2>
+          <p>
+            On your device, and only there. CipherBreaker has no accounts and no
+            server: your tokens, unlocked modes, streak, stats and League standing
+            live in the app's own storage. That is also the limit of it — deleting
+            the app deletes them, and there is no copy for me to restore.
+          </p>
+        </div>
+        <div>
+          <h2>My tokens reset after an update.</h2>
+          <p>
+            This could happen when a device moved from a newer build to an older
+            one — a TestFlight build back to the App Store version, for instance.
+            The older app could not read the newer save file and started from
+            defaults. Version 1.0.2 fixes it: a save file from a newer build now
+            keeps the wallet, the paid mode unlocks, the purchase history and
+            Remove Ads instead of resetting.
+          </p>
+          <p>
+            Because the data is local, a balance already lost cannot be recovered
+            unless you have a device backup from before it happened. Purchased
+            token packs are consumable and cannot be restored by the App Store.
+          </p>
+        </div>
+        <div>
+          <h2>I bought Remove Ads and it is gone.</h2>
+          <p>
+            Open SHOP and tap <strong>Restore Purchases</strong>. Remove Ads is a
+            one-time purchase tied to your Apple Account, so it restores on any
+            device you sign in with. Token packs are consumable and are not part
+            of a restore.
+          </p>
+        </div>
+        <div>
+          <h2>What does Remove Ads actually remove?</h2>
+          <p>
+            The interstitial that can appear between matches. Rewarded video stays
+            available on purpose — it is how you earn tokens without paying — and
+            it is always opt-in. No ad ever plays without you asking for it.
+          </p>
+        </div>
+        <div>
+          <h2>How are hints priced?</h2>
+          <p>
+            From the match's own stake. Revealing a digit costs what the match
+            stakes; a probe — "is this digit in the code at all?" — costs about
+            half; High &amp; Low sells a narrowed range instead. One of each kind
+            per match, and a hinted win pays exactly what an unhinted win pays.
+          </p>
+        </div>
+        <div>
+          <h2>The Daily puzzle, and streaks.</h2>
+          <p>
+            One puzzle a day, four digits and ten guesses. Miss a day and the
+            streak resets; there is no way to buy it back, which is the point of
+            keeping one.
+          </p>
+        </div>
+        <div>
+          <h2>What data leaves my phone?</h2>
+          <p>
+            Ad requests to Google AdMob (non-personalized — no tracking permission
+            is ever requested), purchases through Apple, and anonymous gameplay
+            and crash reports through Firebase. No account, no personal profile,
+            no user content. The
+            <a href="https://cozgur.github.io/cipherbreaker-privacy/">privacy policy</a>
+            spells out each one.
+          </p>
+        </div>
+        <div>
+          <h2>How do I delete my data?</h2>
+          <p>
+            Delete the app. That removes everything it stored, and there is
+            nothing held on a server to ask about. If you want the analytics and
+            crash records from your device removed as well, email me and I will
+            take care of it.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <ul class="links">
+      <li><a href="../">cipherbreaker.app</a></li>
+      <li><a href="https://apps.apple.com/app/id6777961704">App Store</a></li>
+      <li><a href="https://cozgur.github.io/cipherbreaker-privacy/">Privacy policy</a></li>
+    </ul>
+    <p class="foot-url">support</p>
+  </footer>
+</div>
+
+</body>
+</html>
