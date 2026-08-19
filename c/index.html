@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>You've been challenged — CipherBreaker</title>
+<meta name="description" content="A friend set a secret code and dared you to crack it. Ten guesses. CipherBreaker — pure deduction, zero luck.">
+<link rel="canonical" href="https://cipherbreaker.app/c">
+<meta name="theme-color" content="#0a0b1e">
+<!-- The token rides in the FRAGMENT, which never reaches a server or an
+     unfurler — so the preview card is deliberately generic. That is a feature:
+     the chat preview says "you've been challenged", the page says by whom. -->
+<meta property="og:title" content="You've been challenged">
+<meta property="og:description" content="A friend set a secret code and dared you to crack it in 10 guesses.">
+<meta property="og:image" content="https://cipherbreaker.app/assets/og.png">
+<meta property="og:url" content="https://cipherbreaker.app/c">
+<meta name="robots" content="noindex,follow">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="preload" href="../assets/fonts/chakrapetch-bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/inter-regular.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+  /* Same faces, same tokens, same chassis as / and /support/ — the trimmed
+     per-page style block those two established. Third page: if a fourth
+     arrives, extract the shared chassis (the note on /support/ says the same). */
+  @font-face {
+    font-family: 'Chakra Petch';
+    src: url('../assets/fonts/chakrapetch-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('../assets/fonts/inter-regular.woff2') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('../assets/fonts/inter-medium.woff2') format('woff2');
+    font-weight: 500; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../assets/fonts/jetbrainsmono-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+  :root {
+    --bg: #0a0b1e;
+    --violet: #8b5cf6;
+    --pink: #ec4899;
+    --gold: #fbbf24;
+    --text: #f5f5f7;
+    --text-2: #a1a1b5;
+    --text-3: #8f8fac;
+    --hairline: #2a2c54;
+    --display: 'Chakra Petch', 'Trebuchet MS', sans-serif;
+    --body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --pad: clamp(18px, 4.6vw, 40px);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(120% 55% at 50% -14%, rgba(139, 92, 246, 0.22), transparent 68%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+  ::selection { background: rgba(139, 92, 246, 0.42); color: #fff; }
+  :focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; border-radius: 4px; }
+  a { color: #a78bfa; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: #c4b5fd; }
+
+  .chassis {
+    max-width: 560px;
+    margin: clamp(14px, 3vw, 44px) auto;
+    background: linear-gradient(178deg, #17193a 0%, #101128 42%, #0c0d22 100%);
+    border: 2px solid var(--hairline);
+    border-radius: clamp(18px, 3vw, 30px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.06) inset,
+      0 14px 26px -18px rgba(0, 0, 0, 0.92);
+    position: relative;
+    overflow: hidden;
+  }
+  .rail {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px var(--pad);
+    border-bottom: 1px solid var(--hairline);
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.09), transparent);
+  }
+  .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--text); }
+  .dot {
+    width: 22px; height: 22px; border-radius: 7px; flex: none;
+    background: linear-gradient(135deg, var(--violet), var(--pink));
+  }
+  .wordmark {
+    font-family: var(--display);
+    font-size: clamp(15px, 3.4vw, 19px);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .plate {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c4b5fd;
+    padding: 6px 11px;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.12);
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  .panel {
+    padding: clamp(30px, 6vw, 52px) var(--pad);
+    text-align: center;
+  }
+  .from {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(26px, 6.4vw, 38px);
+    line-height: 1.12;
+    letter-spacing: 0.01em;
+    margin: 0 0 12px;
+  }
+  .sub {
+    color: var(--text-2);
+    font-size: 15.5px;
+    max-width: 38ch;
+    margin: 0 auto;
+  }
+  .mode-tag {
+    display: inline-block;
+    margin-top: 18px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #c4b5fd;
+    padding: 6px 12px;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.12);
+    border-radius: 999px;
+  }
+  .cta {
+    display: inline-block;
+    margin-top: 26px;
+    font-family: var(--display);
+    font-size: 17px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #fff;
+    padding: 15px 34px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--violet), #6d28d9);
+    border: 1px solid rgba(139, 92, 246, 0.8);
+    box-shadow: 0 10px 24px -10px rgba(139, 92, 246, 0.55);
+  }
+  .cta:hover { color: #fff; filter: brightness(1.08); }
+  .store {
+    margin-top: 22px;
+    font-size: 14px;
+    color: var(--text-3);
+  }
+  .store a { white-space: nowrap; }
+  .fineprint {
+    margin: 26px auto 0;
+    max-width: 42ch;
+    font-size: 13px;
+    color: var(--text-3);
+  }
+</style>
+</head>
+<body>
+<div class="chassis">
+  <header class="rail">
+    <a class="brand" href="../">
+      <div class="dot" aria-hidden="true"></div>
+      <p class="wordmark">CipherBreaker</p>
+    </a>
+    <p class="plate">Challenge</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <p class="from" id="from" hidden></p>
+      <h1 id="headline">You’ve been challenged</h1>
+      <p class="sub" id="sub">
+        A friend set a secret 4-digit code and dared you to crack it. Ten guesses.
+      </p>
+      <span class="mode-tag" id="mode-tag" hidden></span>
+      <div>
+        <a class="cta" id="open-app" href="https://apps.apple.com/app/id6777961704">Crack the code</a>
+      </div>
+      <p class="store" id="store-line">
+        Have the app? The button opens it.
+        If not — <a href="https://apps.apple.com/app/id6777961704">get CipherBreaker on the App Store</a>,
+        then tap this link again.
+      </p>
+      <p class="fineprint">
+        The whole challenge travels inside this link — no account, no server, nothing stored.
+      </p>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── The challenge envelope, reader's half ─────────────────────────────
+     A DUPLICATE of the app's codec (src/game/challenge/codec.ts — the
+     canonical copy). It exists so this page can greet the guest by the
+     challenger's name and mode; it deliberately never touches the SECRET the
+     decode also yields — printing it here would spoil the game this page
+     exists to start. Change the two copies together; the app's codec tests
+     own the format. */
+  var KEY = [0x5a, 0x1f, 0xc3, 0x88, 0x37, 0xe2, 0x94, 0x0d, 0x6b, 0xf0, 0x2e, 0xb5, 0x41, 0x9c, 0xd7, 0x63];
+  var ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+
+  function checksum(bytes) {
+    var sum = 0;
+    for (var i = 0; i < bytes.length; i += 1) sum = (sum + bytes[i]) & 0xff;
+    return sum ^ 0xa5;
+  }
+
+  function decode(token) {
+    if (!token || token.length < 8 || token.length > 64) return null;
+    var values = [];
+    for (var i = 0; i < token.length; i += 1) {
+      var v = ALPHABET.indexOf(token[i]);
+      if (v === -1) return null;
+      values.push(v);
+    }
+    var bytes = [];
+    for (var j = 0; j < values.length; j += 4) {
+      var v0 = values[j], v1 = values[j + 1], v2 = values[j + 2], v3 = values[j + 3];
+      if (v1 === undefined) return null;
+      bytes.push((v0 << 2) | (v1 >> 4));
+      if (v2 !== undefined) bytes.push(((v1 & 0x0f) << 4) | (v2 >> 2));
+      if (v3 !== undefined) bytes.push(((v2 & 0x03) << 6) | v3);
+    }
+    var body = bytes.map(function (b, k) { return b ^ KEY[k % KEY.length]; });
+    var check = body.pop();
+    if (check !== checksum(body)) return null;
+    if (body[0] !== 1) return null;
+    var mode = body[1];
+    if (mode !== 1 && mode !== 3) return null;
+    var name = '';
+    for (var m = 6; m < body.length; m += 1) name += String.fromCharCode(body[m]);
+    if (/[^a-zA-Z0-9_]/.test(name)) return null;
+    return { mode: mode, name: name };
+  }
+
+  var token = (location.hash || '').replace(/^#/, '');
+  var challenge = decode(token);
+
+  if (challenge !== null) {
+    var from = document.getElementById('from');
+    from.textContent = 'From ' + challenge.name;
+    from.hidden = false;
+    document.getElementById('sub').textContent =
+      challenge.name + ' set a secret 4-digit code and dared you to crack it. Ten guesses.';
+    var tag = document.getElementById('mode-tag');
+    tag.textContent = challenge.mode === 1 ? 'Color Match rules' : 'Precision rules';
+    tag.hidden = false;
+    /* The button becomes the deep link. If the app is installed it opens
+       straight into this challenge; if not, the tap does nothing and the App
+       Store line below is the visible path — the honest fallback, without the
+       user-agent sniffing that breaks every time iOS moves. */
+    document.getElementById('open-app').setAttribute('href', 'cipherbreaker://c/' + token);
+  } else if (token.length > 0) {
+    document.getElementById('headline').textContent = 'This link didn’t survive';
+    document.getElementById('sub').textContent =
+      'It got cut short somewhere along the way. Ask your friend to send it again — or get the app and set a code of your own.';
+    document.getElementById('open-app').textContent = 'Get CipherBreaker';
+  } else {
+    document.getElementById('open-app').textContent = 'Get CipherBreaker';
+  }
+})();
+</script>
+</body>
+</html>
