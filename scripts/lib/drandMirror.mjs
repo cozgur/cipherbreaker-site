@@ -1,4 +1,17 @@
 /**
+ * CANONICAL COPY LIVES IN THE APP REPO (`cozgur/cipherbreaker`), at
+ * `scripts/lib/drandMirror.mjs`. This is a duplicate, deployed here because
+ * GitHub only schedules cron from a repository's default branch and this repo's
+ * default branch is also what Pages serves — so the workflow, the script and the
+ * published files sit together with no cross-repo token.
+ *
+ * Change the two together. What makes the duplication safe is a test that lives
+ * with the canonical copy: `drandMirrorScript.test.ts` sweeps 730 days asserting
+ * this arithmetic equals the app's own `game/daily/drand.ts`. If they diverge, the
+ * mirror files a beacon under a date whose round the client computes differently,
+ * every client silently rejects every mirror file, and nothing logs an error.
+ */
+/**
  * The drand mirror's arithmetic and validation — the half worth testing.
  *
  * Separated from the CLI in `scripts/mirror-daily-beacon.mjs` so
