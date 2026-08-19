@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today's Puzzle — CipherBreaker</title>
+<meta name="description" content="Play today's real CipherBreaker Daily in your browser — the same code every player is solving right now, drawn from public randomness.">
+<link rel="canonical" href="https://cipherbreaker.app/play/">
+<meta name="theme-color" content="#0a0b1e">
+<meta property="og:title" content="Today's CipherBreaker puzzle">
+<meta property="og:description" content="Same code for every player on Earth, drawn from public randomness. Ten guesses. Play it in your browser.">
+<meta property="og:image" content="https://cipherbreaker.app/assets/og.png">
+<meta property="og:url" content="https://cipherbreaker.app/play/">
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="preload" href="../assets/fonts/chakrapetch-bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/inter-regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/jetbrainsmono-bold.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+  /* Fourth page. The /support/ note said a fourth page is the cue to extract
+     the shared chassis — deliberately not done in THIS change: this page ships
+     a game, and folding a refactor of three live pages into it would put the
+     risk in the wrong place. The extraction is now queued work; see the site
+     README note in the commit. Tokens and chassis below are the same as /. */
+  @font-face {
+    font-family: 'Chakra Petch';
+    src: url('../assets/fonts/chakrapetch-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('../assets/fonts/inter-regular.woff2') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('../assets/fonts/inter-medium.woff2') format('woff2');
+    font-weight: 500; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../assets/fonts/jetbrainsmono-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+  :root {
+    --bg: #0a0b1e;
+    --violet: #8b5cf6;
+    --violet-deep: #6d28d9;
+    --pink: #ec4899;
+    --gold: #fbbf24;
+    --success: #10b981;
+    --cyan: #06b6d4;
+    --text: #f5f5f7;
+    --text-2: #a1a1b5;
+    --text-3: #8f8fac;
+    --hairline: #2a2c54;
+    --display: 'Chakra Petch', 'Trebuchet MS', sans-serif;
+    --body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --pad: clamp(18px, 4.6vw, 40px);
+    --r: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(120% 55% at 50% -14%, rgba(139, 92, 246, 0.22), transparent 68%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+  ::selection { background: rgba(139, 92, 246, 0.42); color: #fff; }
+  :focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; border-radius: 4px; }
+  a { color: #a78bfa; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: #c4b5fd; }
+
+  .chassis {
+    max-width: 560px;
+    margin: clamp(14px, 3vw, 44px) auto;
+    background: linear-gradient(178deg, #17193a 0%, #101128 42%, #0c0d22 100%);
+    border: 2px solid var(--hairline);
+    border-radius: clamp(18px, 3vw, 30px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.06) inset,
+      0 14px 26px -18px rgba(0, 0, 0, 0.92);
+    position: relative;
+    overflow: hidden;
+  }
+  .rail {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px var(--pad);
+    border-bottom: 1px solid var(--hairline);
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.09), transparent);
+  }
+  .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--text); }
+  .dot {
+    width: 22px; height: 22px; border-radius: 7px; flex: none;
+    background: linear-gradient(135deg, var(--violet), var(--pink));
+  }
+  .wordmark {
+    font-family: var(--display);
+    font-size: clamp(15px, 3.4vw, 19px);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .plate {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c4b5fd;
+    padding: 6px 11px;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.12);
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  .panel { padding: clamp(22px, 5vw, 40px) var(--pad); }
+
+  .day-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .day-head .turn { color: var(--text-3); }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(24px, 6vw, 32px);
+    margin: 0 0 4px;
+    letter-spacing: 0.01em;
+  }
+  .sub {
+    color: var(--text-2);
+    font-size: 14.5px;
+    margin: 0 0 18px;
+  }
+  .receipt {
+    font-size: 12.5px;
+    color: #a99adf;
+    margin: 0 0 20px;
+  }
+  .receipt a { color: #d6ccff; }
+
+  .ledger {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 120px;
+    margin-bottom: 16px;
+    justify-content: center;
+  }
+  .ledger-empty {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--text-3);
+    text-align: center;
+    margin: 0;
+  }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .tiles { display: flex; gap: 8px; }
+  #slots { width: 100%; gap: 10px; }
+  #slots .tile { flex: 1; width: auto; max-width: 84px; height: 64px; font-size: 27px; border-radius: 12px; }
+  .tile {
+    width: 44px; height: 52px;
+    display: grid; place-items: center;
+    font-family: var(--mono);
+    font-size: 22px;
+    border: 1.5px solid var(--hairline);
+    border-radius: 10px;
+    background: rgba(21, 23, 46, 0.75);
+    color: var(--text-3);
+  }
+  .tile.exact { border-color: var(--success); color: #6ee7b7; background: rgba(16, 185, 129, 0.14); }
+  .tile.moved { border-color: var(--gold); color: var(--gold); background: rgba(251, 191, 36, 0.13); }
+  .tile.absent { color: #8b8bad; }
+  .tile.live {
+    border-color: rgba(139, 92, 246, 0.55);
+    color: var(--text);
+    background: rgba(139, 92, 246, 0.1);
+  }
+  .tile.caret {
+    border-color: var(--violet);
+    outline: 2px solid rgba(139, 92, 246, 0.32);
+    outline-offset: 1px;
+  }
+  .verdict {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-3);
+    margin-left: 4px;
+    white-space: nowrap;
+  }
+  .verdict b { color: var(--success); font-weight: 700; }
+  .verdict i { color: var(--gold); font-style: normal; }
+  .verdict .hi { color: var(--pink); }
+  .verdict .lo { color: var(--cyan); }
+
+  .band {
+    align-self: center;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: #c4b5fd;
+    padding: 6px 14px;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.12);
+    border-radius: 999px;
+    margin: 0 0 14px;
+    display: none;
+  }
+
+  .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .key {
+    appearance: none;
+    font-family: var(--mono);
+    font-size: 19px;
+    color: var(--text);
+    padding: 15px 0;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: linear-gradient(180deg, #23254a, #191b38);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.07) inset,
+      0 2px 0 #0c0d20,
+      0 4px 10px rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+    transition: transform 90ms ease-out, box-shadow 90ms ease-out, background 90ms ease-out;
+  }
+  .key:hover { background: linear-gradient(180deg, #2a2c56, #1e2040); }
+  .key:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 0 0 #0c0d20;
+  }
+  .key[disabled] { opacity: 0.4; cursor: not-allowed; }
+  .key-go {
+    background: linear-gradient(180deg, #9b6ff8, var(--violet-deep));
+    border-color: #a78bfa;
+    font-family: var(--display);
+    letter-spacing: 0.16em;
+    font-size: 15px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.22) inset,
+      0 2px 0 #4c1d95,
+      0 6px 12px -6px rgba(0, 0, 0, 0.9);
+  }
+  .key-go:hover { background: linear-gradient(180deg, #a982fa, #7c3aed); }
+  .key-go[disabled] { background: linear-gradient(180deg, #2f3160, #23254a); border-color: var(--hairline); }
+  .key-icon { display: block; margin: 0 auto; }
+
+  .status {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-3);
+    margin: 12px 2px 0;
+    min-height: 2.6em;
+    line-height: 1.6;
+  }
+  .status.win { color: #6ee7b7; }
+  .status.lose { color: #fca5a5; }
+
+  .after {
+    display: none;
+    text-align: center;
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid var(--hairline);
+  }
+  .after h2 {
+    font-family: var(--display);
+    font-size: 20px;
+    margin: 0 0 8px;
+  }
+  .after p {
+    color: var(--text-2);
+    font-size: 14.5px;
+    max-width: 40ch;
+    margin: 0 auto 18px;
+  }
+  .cta-app {
+    display: inline-block;
+    font-family: var(--display);
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #fff;
+    padding: 14px 30px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--violet), var(--violet-deep));
+    border: 1px solid rgba(139, 92, 246, 0.8);
+    box-shadow: 0 10px 24px -10px rgba(139, 92, 246, 0.55);
+  }
+  .cta-app:hover { color: #fff; filter: brightness(1.08); }
+</style>
+</head>
+<body>
+<div class="chassis">
+  <header class="rail">
+    <a class="brand" href="../">
+      <div class="dot" aria-hidden="true"></div>
+      <p class="wordmark">CipherBreaker</p>
+    </a>
+    <p class="plate">Daily</p>
+  </header>
+
+  <main class="panel">
+    <div class="day-head">
+      <span id="day-label">TODAY'S PUZZLE</span>
+      <span class="turn" id="turn"></span>
+    </div>
+    <h1 id="mode-title">Loading…</h1>
+    <p class="sub" id="mode-sub">Fetching today's public beacon.</p>
+    <p class="receipt" id="receipt"></p>
+
+    <div class="ledger" id="ledger">
+      <p class="ledger-empty" id="ledger-empty">One moment.</p>
+    </div>
+
+    <p class="band" id="band"></p>
+
+    <div class="row" style="margin-bottom:14px">
+      <div class="tiles" id="slots" role="group" aria-label="Your guess"></div>
+    </div>
+
+    <div class="keypad" id="keypad" hidden>
+      <button class="key" type="button" data-d="1">1</button>
+      <button class="key" type="button" data-d="2">2</button>
+      <button class="key" type="button" data-d="3">3</button>
+      <button class="key" type="button" data-d="4">4</button>
+      <button class="key" type="button" data-d="5">5</button>
+      <button class="key" type="button" data-d="6">6</button>
+      <button class="key" type="button" data-d="7">7</button>
+      <button class="key" type="button" data-d="8">8</button>
+      <button class="key" type="button" data-d="9">9</button>
+      <button class="key" type="button" data-d="0">0</button>
+      <button class="key" type="button" id="del" aria-label="Delete last digit">
+        <svg class="key-icon" width="22" height="16" viewBox="0 0 22 16" fill="none"
+             stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <path d="M7 1.8h12.4a1 1 0 0 1 1 1v10.4a1 1 0 0 1-1 1H7L1.4 8z"/>
+          <path d="M11.4 5.6l4.8 4.8M16.2 5.6l-4.8 4.8"/>
+        </svg>
+      </button>
+      <button class="key key-go" type="button" id="go" disabled>GUESS</button>
+    </div>
+
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+
+    <div class="after" id="after">
+      <h2 id="after-head"></h2>
+      <p id="after-body"></p>
+      <a class="cta-app" href="https://apps.apple.com/app/id6777961704">Get CipherBreaker</a>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =====================================================================
+     THE DERIVATION — a duplicate of the app's, and the page's whole claim.
+
+     Ports of: lib/random.ts (mulberry32 cursor RNG), game/daily/dailySeed.ts
+     (FNV-1a over `daily:${date}:${digits}:${randomness}`), and the %3 mode
+     rotation. The app's copies are canonical and tested; this copy is verified
+     against app-produced anchors before every change ships (see the commit).
+     If the two drift, this page plays a DIFFERENT puzzle than the app — the
+     one failure the whole global-Daily design exists to prevent — so treat
+     every character below as frozen alongside the app's.
+     ===================================================================== */
+
+  function mulberry32(state) {
+    state = (state + 0x6d2b79f5) >>> 0;
+    var t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  function createRNG(seed) {
+    var callCount = 0;
+    function step() {
+      callCount += 1;
+      return mulberry32(((seed >>> 0) + callCount - 1) >>> 0);
+    }
+    return {
+      int: function (min, max) {
+        return min + Math.floor(step() * (max - min + 1));
+      },
+      pick: function (arr) {
+        return arr[this.int(0, arr.length - 1)];
+      },
+    };
+  }
+  function hashString(s) {
+    var hash = 2166136261;
+    for (var i = 0; i < s.length; i += 1) {
+      hash ^= s.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+  var DIGITS = ['0','1','2','3','4','5','6','7','8','9'];
+  var NONZERO = ['1','2','3','4','5','6','7','8','9'];
+  function dailySecret(date, digits, randomness) {
+    var rng = createRNG(hashString('daily:' + date + ':' + digits + ':' + randomness));
+    var out = rng.pick(NONZERO);
+    for (var i = 1; i < digits; i += 1) out += rng.pick(DIGITS);
+    return out;
+  }
+  function dailyNumber(date, low, high, randomness) {
+    var rng = createRNG(hashString('daily:' + date + ':' + low + '-' + high + ':' + randomness));
+    return String(rng.int(low, high));
+  }
+
+  /* Day identity — mirrors dailyConfig/dailyMode. */
+  var EPOCH_UTC = Date.UTC(2026, 7, 12);
+  var DRAND_GENESIS = 1692803367;
+  var DRAND_PERIOD = 3;
+  function todayUTC() {
+    var now = new Date();
+    return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  }
+  function isoOf(ms) {
+    var d = new Date(ms);
+    var m = String(d.getUTCMonth() + 1); if (m.length < 2) m = '0' + m;
+    var day = String(d.getUTCDate()); if (day.length < 2) day = '0' + day;
+    return d.getUTCFullYear() + '-' + m + '-' + day;
+  }
+  /* residue 1 → Precision, 2 → High & Low, 0 → Color Match (pickDailyMode). */
+  function modeOf(dayIndex) {
+    var r = ((dayIndex % 3) + 3) % 3;
+    if (r === 1) return 3;
+    if (r === 2) return 2;
+    return 1;
+  }
+
+  /* Evaluators — ports of game/daily/evaluate.ts (two-pass used[] ledger). */
+  function precision(guess, secret) {
+    var n = secret.length, used = [], plus = 0, minus = 0, i, j;
+    for (i = 0; i < n; i += 1) used.push(false);
+    for (i = 0; i < n; i += 1) if (guess[i] === secret[i]) { plus += 1; used[i] = true; }
+    for (i = 0; i < n; i += 1) {
+      if (guess[i] === secret[i]) continue;
+      for (j = 0; j < n; j += 1) {
+        if (used[j]) continue;
+        if (guess[i] === secret[j]) { minus += 1; used[j] = true; break; }
+      }
+    }
+    return { plus: plus, minus: minus, win: plus === n };
+  }
+  function colorStates(guess, secret) {
+    var n = secret.length, states = [], used = [], i, j;
+    for (i = 0; i < n; i += 1) { states.push('absent'); used.push(false); }
+    for (i = 0; i < n; i += 1) if (guess[i] === secret[i]) { states[i] = 'exact'; used[i] = true; }
+    for (i = 0; i < n; i += 1) {
+      if (states[i] === 'exact') continue;
+      for (j = 0; j < n; j += 1) {
+        if (used[j]) continue;
+        if (guess[i] === secret[j]) { states[i] = 'moved'; used[j] = true; break; }
+      }
+    }
+    return states;
+  }
+
+  /* ================= The day ================= */
+  var ms = todayUTC();
+  var date = isoOf(ms);
+  var dayIndex = Math.floor((ms - EPOCH_UTC) / 86400000) + 1;
+  var mode = modeOf(dayIndex);
+  var round = Math.floor((ms / 1000 - DRAND_GENESIS) / DRAND_PERIOD) + 1;
+  var TURNS = 10;
+  var HL_LOW = 1, HL_HIGH = 500;
+
+  var el = function (id) { return document.getElementById(id); };
+  var MODE_NAMES = { 1: 'Color Match', 2: 'High & Low', 3: 'Precision' };
+
+  el('day-label').textContent = 'DAY #' + dayIndex + ' · SAME CODE FOR EVERYONE';
+
+  /* ================= Fetch the beacon, then boot ================= */
+  function validBeacon(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    if (raw.round !== round) return null;
+    if (typeof raw.randomness !== 'string' || !/^[0-9a-f]{64}$/.test(raw.randomness)) return null;
+    return raw.randomness;
+  }
+  function fetchBeacon() {
+    return fetch('../daily/' + date + '.json')
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(function (raw) { return validBeacon(raw) || Promise.reject(); })
+      .catch(function () {
+        return fetch('https://api.drand.sh/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/' + round)
+          .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+          .then(function (raw) { return validBeacon(raw) || Promise.reject(); });
+      });
+  }
+
+  function bootFailed() {
+    el('mode-title').textContent = 'The beacon didn’t arrive';
+    el('mode-sub').textContent =
+      'Today’s code is drawn from public randomness, and this browser couldn’t reach it. The app carries a cache — or try a refresh.';
+    el('ledger-empty').textContent = 'No beacon, no puzzle — nobody gets to invent one.';
+    el('after').style.display = 'block';
+    el('after-head').textContent = 'Play it in the app';
+    el('after-body').textContent = 'CipherBreaker keeps the last three beacons on the phone, so the Daily works offline too.';
+  }
+
+  fetchBeacon().then(boot).catch(bootFailed);
+
+  /* ================= The game ================= */
+  function boot(randomness) {
+    var secret = mode === 2
+      ? dailyNumber(date, HL_LOW, HL_HIGH, randomness)
+      : dailySecret(date, 4, randomness);
+    var width = mode === 2 ? 3 : 4;
+    var exact = mode === 2 ? false : true; /* HL: any width in band */
+    var guesses = [];
+    var input = '';
+    var over = false;
+    var bandLow = HL_LOW, bandHigh = HL_HIGH;
+
+    el('mode-title').textContent = MODE_NAMES[mode];
+    el('mode-sub').textContent = mode === 2
+      ? 'One number, 1–500. Every guess answers higher or lower. Ten tries.'
+      : mode === 1
+        ? 'Four digits, repeats allowed. Green sits right, gold is misplaced. Ten tries.'
+        : 'Four digits, repeats allowed. +N right place, −M wrong place. Ten tries.';
+    el('receipt').innerHTML =
+      'Drawn from <a href="https://api.drand.sh/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/'
+      + round + '" rel="noopener">drand round ' + round + '</a> — nobody picked it, including us.';
+    el('ledger-empty').textContent = mode === 2
+      ? 'The band starts at 1 — 500.'
+      : 'Ten tries. Deduction is the whole game.';
+    el('keypad').hidden = false;
+    if (mode === 2) { el('band').style.display = 'inline-block'; }
+
+    var slots = el('slots');
+    for (var i = 0; i < width; i += 1) {
+      var t = document.createElement('div');
+      t.className = 'tile live' + (i === 0 ? ' caret' : '');
+      t.textContent = '–';
+      slots.appendChild(t);
+    }
+
+    function paintInput() {
+      var tiles = slots.children;
+      for (var i = 0; i < tiles.length; i += 1) {
+        tiles[i].textContent = input[i] !== undefined ? input[i] : '–';
+        tiles[i].classList.toggle('caret', i === input.length && !over);
+      }
+      el('go').disabled = over || (exact ? input.length !== width : !hlValid(input));
+    }
+    function hlValid(s) {
+      if (!/^[1-9][0-9]*$/.test(s)) return false;
+      var v = parseInt(s, 10);
+      return v >= HL_LOW && v <= HL_HIGH;
+    }
+    function paintBand() {
+      el('band').textContent = bandLow + ' —— ' + bandHigh;
+    }
+    function paintTurn() {
+      el('turn').textContent = over ? '' : 'GUESS #' + (guesses.length + 1) + ' / ' + TURNS;
+    }
+
+    function addRow(guess) {
+      var row = document.createElement('div');
+      row.className = 'row';
+      var tiles = document.createElement('div');
+      tiles.className = 'tiles';
+      if (mode === 1) {
+        var states = colorStates(guess, secret);
+        for (var i = 0; i < guess.length; i += 1) {
+          var t = document.createElement('div');
+          t.className = 'tile ' + states[i];
+          t.textContent = guess[i];
+          tiles.appendChild(t);
+        }
+        row.appendChild(tiles);
+      } else if (mode === 3) {
+        for (var k = 0; k < guess.length; k += 1) {
+          var t3 = document.createElement('div');
+          t3.className = 'tile';
+          t3.textContent = guess[k];
+          tiles.appendChild(t3);
+        }
+        row.appendChild(tiles);
+        var res = precision(guess, secret);
+        var v = document.createElement('span');
+        v.className = 'verdict';
+        v.innerHTML = res.win ? '<b>SOLVED</b>' : '<b>+' + res.plus + '</b> <i>−' + res.minus + '</i>';
+        row.appendChild(v);
+      } else {
+        for (var m2 = 0; m2 < guess.length; m2 += 1) {
+          var t2 = document.createElement('div');
+          t2.className = 'tile';
+          t2.textContent = guess[m2];
+          tiles.appendChild(t2);
+        }
+        row.appendChild(tiles);
+        var g = parseInt(guess, 10), s = parseInt(secret, 10);
+        var v2 = document.createElement('span');
+        v2.className = 'verdict';
+        if (g === s) v2.innerHTML = '<b>SOLVED</b>';
+        else if (g < s) { v2.innerHTML = '<span class="hi">▲ HIGHER</span>'; bandLow = Math.max(bandLow, g + 1); }
+        else { v2.innerHTML = '<span class="lo">▼ LOWER</span>'; bandHigh = Math.min(bandHigh, g - 1); }
+        row.appendChild(v2);
+        paintBand();
+      }
+      var empty = el('ledger-empty');
+      if (empty) empty.remove();
+      el('ledger').appendChild(row);
+    }
+
+    function finish(won) {
+      over = true;
+      paintInput();
+      paintTurn();
+      var turns = guesses.length;
+      var status = el('status');
+      if (won) {
+        status.className = 'status win';
+        status.textContent = 'Cracked in ' + turns + '/' + TURNS + '. Same code, every player on Earth.';
+        el('after-head').textContent = 'That would have counted';
+        el('after-body').textContent =
+          'In the app, today’s win starts a streak — and tomorrow’s code is already scheduled. Day #' + (dayIndex + 1) + ' goes live at 00:00 UTC.';
+      } else {
+        status.className = 'status lose';
+        status.textContent = 'The code was ' + secret + '. Ten guesses went.';
+        el('after-head').textContent = 'Tomorrow is a fresh code';
+        el('after-body').textContent =
+          'Day #' + (dayIndex + 1) + ' goes live at 00:00 UTC. In the app it comes with hints, streaks, and the code waits in your pocket.';
+      }
+      el('after').style.display = 'block';
+      el('keypad').hidden = true;
+    }
+
+    function submit() {
+      if (over) return;
+      if (exact ? input.length !== width : !hlValid(input)) return;
+      var guess = input;
+      guesses.push(guess);
+      addRow(guess);
+      input = '';
+      var won = mode === 2
+        ? parseInt(guess, 10) === parseInt(secret, 10)
+        : guess === secret;
+      if (won) { finish(true); return; }
+      if (guesses.length >= TURNS) { finish(false); return; }
+      paintInput();
+      paintTurn();
+    }
+
+    el('keypad').addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (!b || over) return;
+      if (b.id === 'go') { submit(); return; }
+      if (b.id === 'del') { input = input.slice(0, -1); paintInput(); return; }
+      var d = b.getAttribute('data-d');
+      if (d === null) return;
+      if (input.length >= width) return;
+      if (mode === 2 && input.length === 0 && d === '0') return; /* no leading zero */
+      input += d;
+      paintInput();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (over) return;
+      if (e.key >= '0' && e.key <= '9') {
+        if (input.length >= width) return;
+        if (mode === 2 && input.length === 0 && e.key === '0') return;
+        input += e.key; paintInput();
+      } else if (e.key === 'Backspace') {
+        input = input.slice(0, -1); paintInput();
+      } else if (e.key === 'Enter') {
+        submit();
+      }
+    });
+
+    paintBand();
+    paintInput();
+    paintTurn();
+    el('status').textContent = mode === 2
+      ? 'Perfect bisection needs nine. You have ten.'
+      : '10,000 codes are possible. Deduction is how you cut them down.';
+  }
+})();
+</script>
+</body>
+</html>
