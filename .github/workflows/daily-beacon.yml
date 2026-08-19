@@ -1,0 +1,77 @@
+# Publish the day's drand beacon to cipherbreaker.app/daily/<date>.json.
+#
+# The app can already reach the public drand relay directly — this mirror exists
+# so the common path is one static file on a CDN we control, and so the landing
+# page can print the round number it seeded from. If this workflow stops running,
+# players fall through to the relay and nothing breaks; the mirror is an
+# optimisation and a receipt, not a dependency.
+#
+# ## Why this file lives HERE and not in the app repo
+#
+# GitHub only schedules `cron` workflows from a repository's DEFAULT branch. This
+# repo's default branch is also the branch Pages serves, so the workflow, the
+# script and the published file all live in one place with no cross-repo token,
+# no deploy key, and nothing to push to the app repo's `main`. The app repo stays
+# private and uninvolved.
+#
+# ## The one rule
+#
+# A future day's beacon is never published. `scripts/lib/drandMirror.mjs` refuses
+# a date after its own UTC today AND checks the round it fetched belongs to the
+# date it is filing under; the relay refuses an unemitted round anyway. Three
+# checks, because a wrong runner clock defeats exactly one of them.
+#
+# The schedule is 00:05 UTC — five minutes past the Daily's rollover, so the round
+# for today's 00:00:00Z already exists by the time we ask.
+name: daily-beacon
+
+on:
+  schedule:
+    # GitHub's scheduler is best-effort and can run late under load. A late run is
+    # harmless (a beacon is immutable once emitted), and the backfill below
+    # repairs a run that was skipped entirely.
+    - cron: '5 0 * * *'
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: 'How many days back to (re)publish, including today'
+        required: false
+        default: '1'
+
+# Least privilege: the only write this job makes is the beacon file.
+permissions:
+  contents: write
+
+concurrency:
+  # Two overlapping runs would race the same push. Never cancel in progress — a
+  # half-finished run has already fetched a beacon worth committing.
+  group: daily-beacon
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch and write the beacon
+        run: |
+          node scripts/mirror-daily-beacon.mjs \
+            --out daily \
+            --backfill "${{ github.event.inputs.backfill || '1' }}"
+
+      - name: Commit if anything changed
+        run: |
+          if [ -z "$(git status --porcelain daily)" ]; then
+            echo "No new beacon to publish."
+            exit 0
+          fi
+          git config user.name  'cipherbreaker-bot'
+          git config user.email 'noreply@cipherbreaker.app'
+          git add daily
+          git commit -m "chore(daily): publish beacon for $(date -u +%Y-%m-%d)"
+          git push

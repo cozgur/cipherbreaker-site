@@ -651,6 +651,26 @@
     color: #c4b5fd;
     margin: 0;
   }
+  /* The verifiability receipt. Prose, not mono: it is a sentence to read, while
+     the line above it is data to scan. Tinted from the plate's own violet rather
+     than greyed, and held to a readable measure. */
+  .banner-receipt {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #a99adf;
+    max-width: 46ch;
+  }
+  .banner-receipt:empty { display: none; }
+  .banner-receipt a {
+    color: #d6ccff;
+    text-decoration: underline;
+    text-decoration-color: rgba(214, 204, 255, 0.45);
+    text-underline-offset: 2px;
+  }
+  .banner-receipt a:hover {
+    text-decoration-color: #d6ccff;
+  }
 
   /* ================= PROOF: mounted plates ================= */
   .plates {
@@ -1011,6 +1031,7 @@
         <div class="banner">
           <h3>Today's puzzle</h3>
           <p class="banner-meta" id="daily-meta">4 digits · 10 guesses · resets every day</p>
+          <p class="banner-receipt" id="daily-receipt"></p>
         </div>
       </div>
     </section>
@@ -1279,23 +1300,49 @@
   window.setTimeout(function () { display.classList.remove('booting'); }, 1500);
 
   /* ---------------------------------------------------------------
-     The Daily's public identity. The app still derives each player's day
-     number from their own first Daily, so a global "Day #N" printed here
-     would contradict every card in circulation. The rule below is the
-     locked global one (2026-08-12 epoch, mode rotation by day index);
-     it stays dark until the app ships it. One flag, one truth.
+     The Daily's public identity — live as of v1.0.3.
+     Every value below has to agree with the app, because a visitor can hold
+     this page next to their phone:
+       epoch    2026-08-12, Day 1 for everyone      -> daily/dailyConfig.ts
+       boundary 00:00 UTC, not the reader's midnight -> daily/dailyDate.ts
+       rotation dayIndex % 3                         -> daily/dailyMode.ts
+     Mode residues are ordered to match pickDailyMode exactly:
+       0 COLOR MATCH   1 PRECISION   2 HIGH & LOW
+     Shape is per mode, because "4 digits" is not true on a High & Low day.
   --------------------------------------------------------------- */
-  var GLOBAL_DAILY_LIVE = false;
+  var GLOBAL_DAILY_LIVE = true;
   var EPOCH_UTC = Date.UTC(2026, 7, 12);
   var MODE_ROTATION = ['COLOR MATCH', 'PRECISION', 'HIGH & LOW'];
+  var MODE_SHAPE = ['4 digits', '4 digits', '1-500'];
+
+  /* drand quicknet, verified against the live API 2026-08-19. The round for a
+     given day is what makes the claim below checkable rather than asserted:
+     the beacon is public, so anyone can fetch it and re-derive the code. */
+  var DRAND_GENESIS = 1692803367;
+  var DRAND_PERIOD = 3;
 
   if (GLOBAL_DAILY_LIVE) {
     var now = new Date();
     var todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
     var dayIndex = Math.floor((todayUTC - EPOCH_UTC) / 86400000) + 1;
-    var mode = MODE_ROTATION[dayIndex % 3];
+    /* Normalised, like the app's pickDailyMode: a visitor whose clock is set
+       before the epoch would otherwise index with a negative remainder and get
+       undefined printed where the mode should be. */
+    var residue = ((dayIndex % 3) + 3) % 3;
+    var round = Math.floor((todayUTC / 1000 - DRAND_GENESIS) / DRAND_PERIOD) + 1;
+
     document.getElementById('daily-meta').textContent =
-      'Day #' + dayIndex + ' · ' + mode + ' · 4 digits · 10 guesses';
+      'Day #' + dayIndex + ' · ' + MODE_ROTATION[residue] +
+      ' · ' + MODE_SHAPE[residue] + ' · 10 guesses';
+
+    var receipt = document.getElementById('daily-receipt');
+    if (receipt) {
+      receipt.innerHTML =
+        'Today\u2019s code is drawn from <a href="https://api.drand.sh/' +
+        '52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971/public/' +
+        round + '" rel="noopener">drand round ' + round + '</a>' +
+        ' \u2014 public randomness nobody can predict, including us.';
+    }
   }
 })();
 </script>
