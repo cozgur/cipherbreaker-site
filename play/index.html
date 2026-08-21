@@ -61,6 +61,9 @@
     --r: 14px;
   }
   *, *::before, *::after { box-sizing: border-box; }
+  /* The keypad's display:grid out-ranks the UA's [hidden] rule - without
+     this pin the keypad never actually hides (pre-boot or post-game). */
+  [hidden] { display: none !important; }
   body {
     margin: 0;
     background: var(--bg);
