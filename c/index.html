@@ -395,7 +395,7 @@
       </p>
 
       <div class="ledger" id="ledger">
-        <p class="ledger-empty" id="ledger-empty">Ten tries. Deduction is the whole game.</p>
+        <p class="ledger-empty" id="ledger-empty">Deduction is the whole game.</p>
       </div>
 
       <div class="row" style="margin-bottom:14px">
@@ -477,18 +477,52 @@
     var body = bytes.map(function (b, k) { return b ^ KEY[k % KEY.length]; });
     var check = body.pop();
     if (check !== checksum(body)) return null;
-    if (body[0] !== 1) return null;
-    var mode = body[1];
+
+    /* v1: [1, mode, secret*4, name...] — every one a 10-turn dare. */
+    if (body[0] === 1) {
+      var mode1 = body[1];
+      if (mode1 !== 1 && mode1 !== 3) return null;
+      var secret1 = '';
+      for (var s1 = 2; s1 < 6; s1 += 1) {
+        if (body[s1] < 48 || body[s1] > 57) return null;
+        secret1 += String.fromCharCode(body[s1]);
+      }
+      var name1 = '';
+      for (var m1 = 6; m1 < body.length; m1 += 1) name1 += String.fromCharCode(body[m1]);
+      if (/[^a-zA-Z0-9_]/.test(name1)) return null;
+      return { kind: 'dare', mode: mode1, name: name1, secret: secret1, turnLimit: 10 };
+    }
+
+    /* v2: [2, flags, mode, N, secret*4, name...] — flags low 2 bits = type
+       (0 dare, 1 result), bit 2 = won. N = turnLimit (dare) or turnsUsed
+       (result). Mirrors src/game/challenge/codec.ts (the canonical copy). */
+    if (body[0] !== 2) return null;
+    if (body.length < 8) return null;
+    var flags = body[1];
+    if ((flags & ~0x07) !== 0) return null;
+    var type = flags & 0x03;
+    var won = (flags & 0x04) !== 0;
+    var mode = body[2];
     if (mode !== 1 && mode !== 3) return null;
+    var n = body[3];
     var secret = '';
-    for (var s = 2; s < 6; s += 1) {
+    for (var s = 4; s < 8; s += 1) {
       if (body[s] < 48 || body[s] > 57) return null;
       secret += String.fromCharCode(body[s]);
     }
     var name = '';
-    for (var m = 6; m < body.length; m += 1) name += String.fromCharCode(body[m]);
+    for (var m = 8; m < body.length; m += 1) name += String.fromCharCode(body[m]);
     if (/[^a-zA-Z0-9_]/.test(name)) return null;
-    return { mode: mode, name: name, secret: secret };
+    if (type === 0) {
+      if (won) return null;
+      if (n !== 5 && n !== 7 && n !== 10) return null;
+      return { kind: 'dare', mode: mode, name: name, secret: secret, turnLimit: n };
+    }
+    if (type === 1) {
+      if (n < 1 || n > 10) return null;
+      return { kind: 'result', mode: mode, name: name, secret: secret, turnsUsed: n, won: won };
+    }
+    return null;
   }
 
   /* ── Evaluators — a DUPLICATE of /play/'s, which duplicate the app's
@@ -531,6 +565,22 @@
   var token = (location.hash || '').replace(/^#/, '');
   var challenge = decode(token);
 
+  /* v2 result: a score coming back up the thread — a panel, not a board.
+     The token carries the secret structurally; this page NEVER prints it
+     (the original dare link is one message up, still live for others). */
+  if (challenge !== null && challenge.kind === 'result') {
+    el('pitch-headline').textContent = challenge.won
+      ? challenge.name + ' cracked the code'
+      : 'The code held';
+    el('pitch-sub').textContent = challenge.won
+      ? challenge.name + ' broke it in ' + challenge.turnsUsed +
+        (challenge.turnsUsed === 1 ? ' guess' : ' guesses') + '. Your move — set one of your own.'
+      : challenge.name + ' burned all ' + challenge.turnsUsed +
+        ' guesses and the code walked away clean. Set one of your own.';
+    el('pitch-cta').textContent = 'Get CipherBreaker';
+    return;
+  }
+
   if (challenge === null) {
     if (token.length > 0) {
       el('pitch-headline').textContent = 'This link didn’t survive';
@@ -572,7 +622,7 @@
      comes from the envelope, not a beacon, and mode 2 cannot occur
      (the app's codec only mints Color Match and Precision dares). ── */
   var WIDTH = 4;
-  var TURNS = 10;
+  var TURNS = challenge.turnLimit;
   var secret = challenge.secret;
   var mode = challenge.mode;
   var name = challenge.name;
@@ -582,9 +632,9 @@
 
   el('from-label').textContent = 'FROM ' + name.toUpperCase();
   el('game-title').textContent = 'Crack ' + name + '’s code';
-  el('game-sub').textContent = mode === 1
-    ? 'Four digits. Green sits right, gold is misplaced. Ten tries.'
-    : 'Four digits. +N right place, −M wrong place. Ten tries.';
+  el('game-sub').textContent = (mode === 1
+    ? 'Four digits. Green sits right, gold is misplaced. '
+    : 'Four digits. +N right place, −M wrong place. ') + TURNS + ' tries.';
 
   var settled = loadSettled();
   if (settled !== null) {
@@ -677,7 +727,7 @@
         name + ' is waiting. Set a code of your own and dare them back — sending one is the half that lives in the app.';
     } else {
       status.className = 'status lose';
-      status.textContent = 'The code was ' + secret + '. It survived all ten.';
+      status.textContent = 'The code was ' + secret + '. It survived all ' + TURNS + '.';
       el('after-head').textContent = name + '’s code survived';
       el('after-body').textContent =
         'They walk taller today. Get the app, set a code of your own, and send the rematch.';
