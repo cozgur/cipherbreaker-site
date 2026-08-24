@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0a0b1e">
+<title>Circulation — CipherBreaker</title>
+<link rel="icon" href="/assets/favicon-32.png" sizes="32x32">
+<style>
+  /* ---- Brand faces — same self-hosted subsets the landing page uses ---- */
+  @font-face {
+    font-family: 'Chakra Petch';
+    src: url('/assets/fonts/chakrapetch-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('/assets/fonts/inter-regular.woff2') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('/assets/fonts/inter-semibold.woff2') format('woff2');
+    font-weight: 600; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('/assets/fonts/jetbrainsmono-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+
+  /* ---- Tokens: src/theme/tokens.ts, verbatim (as on the landing page) ---- */
+  :root {
+    --bg: #0a0b1e;
+    --elevated: #15172e;
+    --recess: #06071a;
+    --violet: #8b5cf6;
+    --cyan: #06b6d4;
+    --gold: #fbbf24;
+    --success: #10b981;
+    --danger: #ef4444;
+    --text: #f5f5f7;
+    --text-2: #a1a1b5;
+    --text-3: #8f8fac;
+    --hairline: #2a2c54;
+    --r-tight: 8px;
+    --r: 16px;
+    --display: 'Chakra Petch', 'Trebuchet MS', sans-serif;
+    --body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+    background: var(--bg); color: var(--text);
+    font-family: var(--body); line-height: 1.6;
+  }
+  ::selection { background: var(--violet); color: #fff; }
+  :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+  main { width: min(520px, 92vw); margin: 0 auto; flex: 1; }
+
+  header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 1rem; padding: 1.4rem 0 .8rem; border-bottom: 1px solid var(--hairline);
+  }
+  .brand {
+    font-family: var(--display); font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; font-size: 1.05rem; margin: 0;
+  }
+  .brand a { color: var(--text); text-decoration: none; }
+  .dept {
+    font-family: var(--mono); font-weight: 700; font-size: .7rem;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--text-3);
+    white-space: nowrap;
+  }
+
+  .panel {
+    margin-top: 2rem; background: var(--elevated);
+    border: 1px solid var(--hairline); border-radius: var(--r);
+    padding: 1.6rem 1.7rem 1.7rem;
+  }
+  .label {
+    font-family: var(--mono); font-weight: 700; font-size: .7rem;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--text-2);
+    margin: 0 0 .3rem;
+  }
+  .count {
+    font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums;
+    font-size: clamp(4.2rem, 17vw, 6.4rem); line-height: 1.05;
+    margin: .1rem 0 .4rem; color: var(--gold);
+    text-shadow: 0 0 34px rgba(251, 191, 36, .25);
+  }
+  .count.zero { color: var(--text-3); text-shadow: none; }
+  .status {
+    display: flex; align-items: center; gap: .5rem;
+    font-size: .85rem; color: var(--text-2); margin: 0;
+  }
+  .lamp {
+    width: .55rem; height: .55rem; border-radius: 50%;
+    background: var(--text-3); flex: none;
+  }
+  .lamp.live { background: var(--success); animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .lamp.live { animation: none; } }
+
+  .ledger { margin-top: 1.2rem; border-top: 1px solid var(--hairline); padding-top: .9rem; }
+  .ledger p {
+    margin: .2rem 0; font-size: .8rem; color: var(--text-2);
+    display: flex; justify-content: space-between; gap: 1rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .ledger p span:first-child { font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; color: var(--text-3); }
+
+  .prose { color: var(--text-2); font-size: .95rem; max-width: 44ch; }
+  .error { color: var(--danger); font-size: .88rem; }
+
+  button {
+    font-family: var(--display); font-weight: 700; text-transform: uppercase;
+    letter-spacing: .08em; font-size: .9rem; cursor: pointer;
+    color: #fff; background: linear-gradient(180deg, var(--violet), #6d28d9);
+    border: 0; border-radius: var(--r-tight); padding: .7rem 1.3rem;
+  }
+  button:hover { filter: brightness(1.12); }
+  button.quiet {
+    background: transparent; color: var(--text-3);
+    border: 1px solid var(--hairline); font-size: .7rem; padding: .4rem .8rem;
+  }
+  button.quiet:hover { color: var(--text); border-color: var(--text-3); filter: none; }
+
+  .whoami {
+    margin-top: 1.3rem; display: flex; align-items: center;
+    justify-content: space-between; gap: 1rem;
+    font-size: .78rem; color: var(--text-3);
+  }
+  footer {
+    width: min(520px, 92vw); margin: 2.5rem auto 1.3rem; padding-top: .7rem;
+    border-top: 1px solid var(--hairline); font-size: .75rem; color: var(--text-3);
+    display: flex; justify-content: space-between; gap: 1rem;
+  }
+  footer a { color: var(--text-3); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 class="brand"><a href="/">CipherBreaker</a></h1>
+    <span class="dept">Circulation</span>
+  </header>
+
+  <!-- Signed out -->
+  <section id="gate" class="panel">
+    <p class="label">Operators only</p>
+    <p class="prose">The live circulation count — how many people are on the
+      site right now — opens for the publisher's account and no one else.</p>
+    <p><button id="signin">Sign in with Google</button></p>
+    <p id="gate-error" class="error" hidden></p>
+  </section>
+
+  <!-- Signed in -->
+  <section id="board" class="panel" hidden>
+    <p class="label">On the site right now</p>
+    <p id="count" class="count zero">—</p>
+    <p class="status"><span id="lamp" class="lamp"></span><span id="status">connecting…</span></p>
+    <div class="ledger" id="ledger" hidden>
+      <p><span>FRESH SESSIONS (COUNTED)</span><span id="fresh">0</span></p>
+      <p><span>STALE SESSIONS (DISCOUNTED)</span><span id="stale">0</span></p>
+      <p><span>LONGEST OPEN SESSION</span><span id="oldest">—</span></p>
+    </div>
+  </section>
+
+  <div class="whoami" id="whoami" hidden>
+    <span id="who"></span>
+    <button class="quiet" id="signout">Sign out</button>
+  </div>
+</main>
+
+<footer>
+  <span>A session counts while its connection is open and its stamp is
+    under five minutes old.</span>
+  <a href="/">cipherbreaker.app</a>
+</footer>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+  from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js';
+import { getDatabase, ref, onValue }
+  from 'https://www.gstatic.com/firebasejs/12.1.0/firebase-database.js';
+
+const app = initializeApp({
+  apiKey: 'AIzaSyCYSAat_8WvaAYhKfYpShGYEGHtLapLn8I',
+  authDomain: 'cipherbreaker-75885.firebaseapp.com',
+  databaseURL: 'https://cipherbreaker-75885-default-rtdb.firebaseio.com',
+  projectId: 'cipherbreaker-75885',
+  appId: '1:344319484676:web:e7f074f8cf9df2a5c36651',
+});
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const $ = (id) => document.getElementById(id);
+const FRESH_MS = 5 * 60 * 1000;
+
+let serverOffset = 0;   // server clock minus local clock
+let sessions = {};      // last /presence snapshot
+let unsubscribe = null;
+let repaintTimer = null;
+
+onValue(ref(db, '.info/serverTimeOffset'), (s) => { serverOffset = s.val() || 0; });
+
+function repaint() {
+  const now = Date.now() + serverOffset;
+  const stamps = Object.values(sessions).filter((t) => typeof t === 'number');
+  const fresh = stamps.filter((t) => t > now - FRESH_MS);
+  $('count').textContent = String(fresh.length);
+  $('count').classList.toggle('zero', fresh.length === 0);
+  $('fresh').textContent = String(fresh.length);
+  $('stale').textContent = String(stamps.length - fresh.length);
+  /* Stamps refresh every 4 min, so "longest open" is a floor, not a
+     biography — still enough to tell a drive-by from a solver. */
+  const oldest = fresh.length ? Math.round((now - Math.min(...fresh)) / 60000) : null;
+  $('oldest').textContent = oldest === null ? '—' : oldest < 1 ? 'under a minute' : `${oldest}+ min`;
+  $('ledger').hidden = false;
+}
+
+function watch() {
+  $('status').textContent = 'opening the ledger…';
+  unsubscribe = onValue(ref(db, 'presence'), (snap) => {
+    sessions = snap.val() || {};
+    $('lamp').classList.add('live');
+    $('status').textContent = 'live — updates as visitors arrive and leave';
+    repaint();
+  }, (err) => {
+    $('lamp').classList.remove('live');
+    $('status').textContent = err.code === 'PERMISSION_DENIED'
+      ? 'this Google account is not the publisher’s — the ledger stays shut'
+      : `ledger unavailable (${err.code || 'unknown'})`;
+    $('count').textContent = '—';
+    $('ledger').hidden = true;
+  });
+  /* Freshness decays with the clock, not only with data changes. */
+  repaintTimer = setInterval(repaint, 15000);
+}
+
+function unwatch() {
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  if (repaintTimer) { clearInterval(repaintTimer); repaintTimer = null; }
+  sessions = {};
+}
+
+onAuthStateChanged(auth, (user) => {
+  $('gate').hidden = !!user;
+  $('board').hidden = !user;
+  $('whoami').hidden = !user;
+  if (user) {
+    $('who').textContent = `Signed in as ${user.email}`;
+    watch();
+  } else {
+    unwatch();
+  }
+});
+
+$('signin').addEventListener('click', async () => {
+  $('gate-error').hidden = true;
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+  } catch (e) {
+    $('gate-error').textContent = `Sign-in failed (${e.code || 'unknown'}). Pop-up blocked?`;
+    $('gate-error').hidden = false;
+  }
+});
+$('signout').addEventListener('click', () => { signOut(auth); });
+</script>
+</body>
+</html>
