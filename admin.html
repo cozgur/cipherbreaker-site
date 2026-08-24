@@ -88,12 +88,18 @@
     letter-spacing: .18em; text-transform: uppercase; color: var(--text-2);
     margin: 0 0 .3rem;
   }
+  .counts {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem;
+    margin: .2rem 0 .6rem;
+  }
+  @media (max-width: 26rem) { .counts { grid-template-columns: 1fr; gap: .8rem; } }
   .count {
     font-family: var(--mono); font-weight: 700; font-variant-numeric: tabular-nums;
-    font-size: clamp(4.2rem, 17vw, 6.4rem); line-height: 1.05;
-    margin: .1rem 0 .4rem; color: var(--gold);
+    font-size: clamp(3.2rem, 13vw, 4.8rem); line-height: 1.05;
+    margin: .05rem 0 0; color: var(--gold);
     text-shadow: 0 0 34px rgba(251, 191, 36, .25);
   }
+  .count.app { color: var(--cyan); text-shadow: 0 0 34px rgba(6, 182, 212, .25); }
   .count.zero { color: var(--text-3); text-shadow: none; }
   .status {
     display: flex; align-items: center; gap: .5rem;
@@ -163,13 +169,21 @@
 
   <!-- Signed in -->
   <section id="board" class="panel" hidden>
-    <p class="label">On the site right now</p>
-    <p id="count" class="count zero">—</p>
+    <div class="counts">
+      <div>
+        <p class="label">On the site</p>
+        <p id="count-web" class="count zero">—</p>
+      </div>
+      <div>
+        <p class="label">In the app</p>
+        <p id="count-app" class="count app zero">—</p>
+      </div>
+    </div>
     <p class="status"><span id="lamp" class="lamp"></span><span id="status">connecting…</span></p>
     <div class="ledger" id="ledger" hidden>
-      <p><span>FRESH SESSIONS (COUNTED)</span><span id="fresh">0</span></p>
-      <p><span>STALE SESSIONS (DISCOUNTED)</span><span id="stale">0</span></p>
-      <p><span>LONGEST OPEN SESSION</span><span id="oldest">—</span></p>
+      <p><span>SITE — LONGEST OPEN SESSION</span><span id="oldest-web">—</span></p>
+      <p><span>APP — LONGEST OPEN SESSION</span><span id="oldest-app">—</span></p>
+      <p><span>STALE STAMPS DISCOUNTED</span><span id="stale">0</span></p>
     </div>
   </section>
 
@@ -205,51 +219,67 @@ const db = getDatabase(app);
 const $ = (id) => document.getElementById(id);
 const FRESH_MS = 5 * 60 * 1000;
 
+/* Two ledgers, one clock. The web ledger empties itself on disconnect
+   (onDisconnect); the app ledger is REST heartbeats only, so the
+   freshness filter is what retires a killed app's last stamp. */
+const LEDGERS = [
+  { path: 'presence',     count: 'count-web', oldest: 'oldest-web', sessions: {} },
+  { path: 'presence_app', count: 'count-app', oldest: 'oldest-app', sessions: {} },
+];
+
 let serverOffset = 0;   // server clock minus local clock
-let sessions = {};      // last /presence snapshot
-let unsubscribe = null;
+let unsubscribes = [];
 let repaintTimer = null;
 
 onValue(ref(db, '.info/serverTimeOffset'), (s) => { serverOffset = s.val() || 0; });
 
 function repaint() {
   const now = Date.now() + serverOffset;
-  const stamps = Object.values(sessions).filter((t) => typeof t === 'number');
-  const fresh = stamps.filter((t) => t > now - FRESH_MS);
-  $('count').textContent = String(fresh.length);
-  $('count').classList.toggle('zero', fresh.length === 0);
-  $('fresh').textContent = String(fresh.length);
-  $('stale').textContent = String(stamps.length - fresh.length);
-  /* Stamps refresh every 4 min, so "longest open" is a floor, not a
-     biography — still enough to tell a drive-by from a solver. */
-  const oldest = fresh.length ? Math.round((now - Math.min(...fresh)) / 60000) : null;
-  $('oldest').textContent = oldest === null ? '—' : oldest < 1 ? 'under a minute' : `${oldest}+ min`;
+  let staleTotal = 0;
+  for (const l of LEDGERS) {
+    const stamps = Object.values(l.sessions).filter((t) => typeof t === 'number');
+    const fresh = stamps.filter((t) => t > now - FRESH_MS);
+    staleTotal += stamps.length - fresh.length;
+    $(l.count).textContent = String(fresh.length);
+    $(l.count).classList.toggle('zero', fresh.length === 0);
+    /* Stamps refresh every 4 min, so "longest open" is a floor, not a
+       biography — still enough to tell a drive-by from a solver. */
+    const oldest = fresh.length ? Math.round((now - Math.min(...fresh)) / 60000) : null;
+    $(l.oldest).textContent = oldest === null ? '—' : oldest < 1 ? 'under a minute' : `${oldest}+ min`;
+  }
+  $('stale').textContent = String(staleTotal);
   $('ledger').hidden = false;
 }
 
 function watch() {
-  $('status').textContent = 'opening the ledger…';
-  unsubscribe = onValue(ref(db, 'presence'), (snap) => {
-    sessions = snap.val() || {};
-    $('lamp').classList.add('live');
-    $('status').textContent = 'live — updates as visitors arrive and leave';
+  $('status').textContent = 'opening the ledgers…';
+  let liveCount = 0;
+  unsubscribes = LEDGERS.map((l) => onValue(ref(db, l.path), (snap) => {
+    l.sessions = snap.val() || {};
+    liveCount += 1;
+    if (liveCount >= LEDGERS.length) {
+      $('lamp').classList.add('live');
+      $('status').textContent = 'live — updates as players arrive and leave';
+    }
     repaint();
   }, (err) => {
     $('lamp').classList.remove('live');
     $('status').textContent = err.code === 'PERMISSION_DENIED'
       ? 'this Google account is not the publisher’s — the ledger stays shut'
       : `ledger unavailable (${err.code || 'unknown'})`;
-    $('count').textContent = '—';
+    $('count-web').textContent = '—';
+    $('count-app').textContent = '—';
     $('ledger').hidden = true;
-  });
+  }));
   /* Freshness decays with the clock, not only with data changes. */
   repaintTimer = setInterval(repaint, 15000);
 }
 
 function unwatch() {
-  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  for (const u of unsubscribes) u();
+  unsubscribes = [];
   if (repaintTimer) { clearInterval(repaintTimer); repaintTimer = null; }
-  sessions = {};
+  for (const l of LEDGERS) l.sessions = {};
 }
 
 onAuthStateChanged(auth, (user) => {
