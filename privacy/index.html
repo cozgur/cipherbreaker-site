@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — CipherBreaker</title>
+<meta name="description" content="What CipherBreaker stores on your device, what leaves it, and who handles it: Google AdMob for non-personalized ads, Apple for purchases, Firebase for anonymous gameplay and crash reports.">
+<link rel="canonical" href="https://cipherbreaker.app/privacy/">
+<meta name="theme-color" content="#0a0b1e">
+<meta name="robots" content="index,follow">
+
+<link rel="icon" href="../assets/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="preload" href="../assets/fonts/chakrapetch-bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/inter-regular.woff2" as="font" type="font/woff2" crossorigin>
+
+<style>
+  /* The support page's chassis, carried over verbatim so the two secondary
+     pages read as one site. Same note applies as there: the home page is live
+     and verified, so the tokens stay duplicated rather than extracted. A
+     fourth page is the point at which this becomes one stylesheet. */
+  @font-face {
+    font-family: 'Chakra Petch';
+    src: url('../assets/fonts/chakrapetch-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('../assets/fonts/inter-regular.woff2') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'Inter';
+    src: url('../assets/fonts/inter-medium.woff2') format('woff2');
+    font-weight: 500; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: url('../assets/fonts/jetbrainsmono-bold.woff2') format('woff2');
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+
+  :root {
+    --bg: #0a0b1e;
+    --violet: #8b5cf6;
+    --pink: #ec4899;
+    --gold: #fbbf24;
+    --text: #f5f5f7;
+    --text-2: #a1a1b5;
+    --text-3: #8f8fac;
+    --hairline: #2a2c54;
+    --display: 'Chakra Petch', 'Trebuchet MS', sans-serif;
+    --body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    --pad: clamp(18px, 4.6vw, 40px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(120% 55% at 50% -14%, rgba(139, 92, 246, 0.22), transparent 68%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+
+  ::selection { background: rgba(139, 92, 246, 0.42); color: #fff; }
+  :focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; border-radius: 4px; }
+  html { scrollbar-color: #3a3c6e var(--bg); scrollbar-width: thin; }
+  ::-webkit-scrollbar { width: 11px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #3a3c6e; border: 3px solid var(--bg); border-radius: 999px; }
+
+  a { color: #a78bfa; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: #c4b5fd; }
+
+  .chassis {
+    max-width: 760px;
+    margin: clamp(14px, 3vw, 44px) auto;
+    background: linear-gradient(178deg, #17193a 0%, #101128 42%, #0c0d22 100%);
+    border: 2px solid var(--hairline);
+    border-radius: clamp(18px, 3vw, 30px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.06) inset,
+      0 14px 26px -18px rgba(0, 0, 0, 0.92);
+    position: relative;
+    overflow: hidden;
+  }
+  .rail {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px var(--pad);
+    border-bottom: 1px solid var(--hairline);
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.09), transparent);
+  }
+  .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--text); }
+  .dot {
+    width: 22px; height: 22px; border-radius: 7px; flex: none;
+    background: linear-gradient(135deg, var(--violet), var(--pink));
+  }
+  .wordmark {
+    font-family: var(--display);
+    font-size: clamp(15px, 3.4vw, 19px);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .plate {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #c4b5fd;
+    padding: 6px 11px;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.12);
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  .panel {
+    padding: clamp(26px, 5.4vw, 48px) var(--pad);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .panel:last-of-type { border-bottom: 0; }
+
+  .etch {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .etch::after {
+    content: '';
+    height: 1px; flex: 1;
+    background: linear-gradient(90deg, var(--hairline), transparent);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(30px, 7vw, 46px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 16px;
+  }
+  h2 {
+    font-family: var(--display);
+    font-size: 19px;
+    letter-spacing: 0.02em;
+    margin: 0 0 8px;
+  }
+  h3 {
+    font-family: var(--body);
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--text);
+    margin: 20px 0 6px;
+  }
+  p { max-width: 66ch; text-wrap: pretty; }
+  .lede { font-size: clamp(17px, 2.2vw, 19px); color: var(--text-2); margin: 0 0 22px; }
+
+  .stamp {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    color: var(--text-3);
+    margin: 0;
+  }
+
+  /* The summary reads as a receipt: one claim per line, nothing buried. */
+  .summary { margin: 0; padding: 0; list-style: none; }
+  .summary li {
+    padding: 13px 0 13px 26px;
+    border-bottom: 1px dashed rgba(42, 44, 84, 0.85);
+    color: var(--text-2);
+    position: relative;
+  }
+  .summary li:last-child { border-bottom: 0; }
+  .summary li::before {
+    content: '';
+    position: absolute;
+    left: 2px; top: 22px;
+    width: 8px; height: 8px; border-radius: 3px;
+    background: linear-gradient(135deg, var(--violet), var(--pink));
+  }
+  .summary strong { color: var(--text); font-weight: 500; }
+
+  .sections { margin: 0; padding: 0; }
+  .sections > div {
+    padding: 22px 0;
+    border-bottom: 1px dashed rgba(42, 44, 84, 0.85);
+  }
+  .sections > div:last-child { border-bottom: 0; }
+  .sections p { color: var(--text-2); margin: 0; }
+  .sections p + p { margin-top: 10px; }
+  .sections ul { color: var(--text-2); margin: 10px 0 0; padding-left: 22px; max-width: 66ch; }
+  .sections li { margin: 6px 0; }
+  .sections li::marker { color: #6d6f9c; }
+
+  .num {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    color: var(--text-3);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 15px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    border: 2px solid rgba(139, 92, 246, 0.55);
+    background: linear-gradient(180deg, #23254c, #16182f);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 8px 16px -8px rgba(0, 0, 0, 0.9);
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 140ms ease-out, border-color 140ms ease-out;
+  }
+  .contact:hover { transform: translateY(-2px); border-color: #c4b5fd; color: var(--text); }
+
+  footer {
+    padding: 20px var(--pad);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 22px;
+    border-top: 1px solid var(--hairline);
+    background: rgba(6, 7, 26, 0.45);
+  }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+    margin: 0; padding: 0; list-style: none; font-size: 14.5px;
+  }
+  .links a { color: var(--text-2); text-decoration: none; }
+  .links a:hover { color: var(--text); text-decoration: underline; }
+  .foot-url { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: #a78bfa; }
+  .fine { color: var(--text-3); font-size: 14px; max-width: 66ch; }
+</style>
+</head>
+<body>
+
+<div class="chassis">
+  <header class="rail">
+    <a class="brand" href="../">
+      <div class="dot" aria-hidden="true"></div>
+      <p class="wordmark">CipherBreaker</p>
+    </a>
+    <p class="plate">Privacy</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h1>Privacy Policy</h1>
+      <p class="lede">
+        This policy explains how <strong>CipherBreaker: Pure Deduction</strong> (“the App”)
+        handles information. The App is made and operated by an individual developer,
+        Ozgur Cetintas (“the Developer”, “we”).
+      </p>
+      <p class="stamp">Last updated: 31 August 2026</p>
+    </section>
+
+    <section class="panel">
+      <p class="etch">The short version</p>
+      <ul class="summary">
+        <li><strong>No account, no sign-up, no personal information.</strong> No name, email, phone number, contacts, location, photos, or microphone access.</li>
+        <li><strong>No servers of our own.</strong> Your progress, tokens, settings and purchase records are stored on your device and nowhere else.</li>
+        <li><strong>No tracking across apps or websites.</strong> The App never asks for App Tracking Transparency permission and does not use the advertising identifier (IDFA) for tracking.</li>
+        <li><strong>Ads come from Google AdMob, non-personalized only.</strong> Every ad request is flagged that way.</li>
+        <li><strong>Purchases are processed by Apple.</strong> We never see or store your payment details.</li>
+        <li><strong>Anonymous gameplay and crash reports go to Firebase.</strong> Aggregate product and stability data, not tied to an identity. Section 5 sets out exactly what that means.</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <p class="etch">In full</p>
+      <div class="sections">
+
+        <div>
+          <span class="num">01</span>
+          <h2>Information we collect</h2>
+          <p>
+            We collect no personal information. The App does not require an account
+            and never asks you for personal details.
+          </p>
+          <p>
+            On first launch the App may generate a random nickname locally on your
+            device — an adjective-and-noun style handle — purely for display. It is
+            not derived from anything about you, is never sent to us, and stays on
+            your device.
+          </p>
+        </div>
+
+        <div>
+          <span class="num">02</span>
+          <h2>What is stored on your device</h2>
+          <p>
+            The following is kept in the App's own local storage and is never
+            transmitted to us — we operate no server that could receive it:
+          </p>
+          <ul>
+            <li>Game progress: level, experience, statistics, unlocked modes, tutorial and tooltip state.</li>
+            <li>Your in-game token balance and economy state.</li>
+            <li>App settings, such as sound and haptics preferences.</li>
+            <li>Daily challenge progress and streak.</li>
+            <li>The current match state.</li>
+            <li>A local record of your in-app purchases: Apple's transaction identifiers, the product identifier, the number of tokens granted, timestamps, and whether the purchase was made in Apple's production or sandbox environment. These are opaque identifiers issued by Apple and contain no personal information.</li>
+          </ul>
+          <p>Deleting the App from your device deletes all of it.</p>
+        </div>
+
+        <div>
+          <span class="num">03</span>
+          <h2>Advertising (Google AdMob)</h2>
+          <p>
+            The App shows advertisements through <strong>Google AdMob</strong>. Ads are
+            what keep the App free.
+          </p>
+          <p>
+            <strong>We serve non-personalized ads only.</strong> Every ad request the App
+            makes is flagged as non-personalized. The App does not use the Apple
+            Advertising Identifier (IDFA) for tracking and presents no App Tracking
+            Transparency prompt, because we do not track you.
+          </p>
+          <p>To serve ads and prevent fraud, Google may process limited information, including:</p>
+          <ul>
+            <li>Your device's IP address, which Google may use for coarse location, fraud prevention, and limiting how often you see the same ad.</li>
+            <li>Ad-related identifiers used for frequency capping and fraud prevention.</li>
+            <li>Whether you interacted with an ad — for example, whether it was viewed.</li>
+          </ul>
+          <p>
+            The App sends Google no identifier of its own about you. Google acts as an
+            independent data controller for what it processes through AdMob, governed by
+            <a href="https://policies.google.com/privacy">Google's privacy policy</a> and
+            <a href="https://policies.google.com/technologies/partner-sites">how Google uses information from sites or apps that use its services</a>.
+          </p>
+
+          <h3>Consent in the EEA, UK and Switzerland</h3>
+          <p>
+            If you are in the European Economic Area, the United Kingdom or Switzerland,
+            the App presents a consent message through Google's User Messaging Platform
+            before any ad is loaded, as applicable data-protection law requires. You make
+            your choice there, and you can revisit it later from the App's privacy
+            options. Whatever you choose, the App only ever serves non-personalized ads.
+          </p>
+
+          <h3>Apple SKAdNetwork</h3>
+          <p>
+            The App supports Apple's <strong>SKAdNetwork</strong>, a privacy-preserving
+            framework that measures advertising campaign performance in aggregate without
+            identifying or tracking individual users.
+          </p>
+        </div>
+
+        <div>
+          <span class="num">04</span>
+          <h2>In-app purchases (Apple)</h2>
+          <p>
+            The App offers optional in-app purchases — token packs and a one-time
+            “Remove Ads” purchase. All of it is processed by <strong>Apple</strong> through
+            the App Store using StoreKit. <strong>We never see or store your payment
+            information.</strong>
+          </p>
+          <p>
+            The App keeps a local record of completed purchases on your device (see
+            section 02) so it can deliver what you bought and let you restore
+            non-consumable purchases. That record never leaves your device. When you
+            restore purchases, the App reads your entitlements directly from Apple; that
+            information is not sent to us.
+          </p>
+          <p>
+            Apple's handling of your purchase and payment information is governed by
+            <a href="https://www.apple.com/legal/privacy/">Apple's privacy policy</a>.
+          </p>
+        </div>
+
+        <div>
+          <span class="num">05</span>
+          <h2>Analytics and crash reporting (Firebase)</h2>
+          <p>
+            The App uses <strong>Google Firebase Analytics</strong> and
+            <strong>Firebase Crashlytics</strong> to understand how the game is played and
+            to find out when it breaks. This is the one place where information about
+            your use of the App leaves your device, and it is anonymous.
+          </p>
+          <p>What is sent:</p>
+          <ul>
+            <li>Gameplay events, such as a match starting or ending, a mode being unlocked, a hint bought, a case completed, or which screen is on view. These carry only the App's own scalar values — a mode identifier, a stake, a count — never anything you typed and nothing personal.</li>
+            <li>Crash and error reports: the error, a stack trace, and technical device context such as the device model, iOS version and App version.</li>
+          </ul>
+          <p>
+            Firebase assigns a random, app-scoped instance identifier so events from one
+            installation can be counted together. It is not your name, your Apple Account,
+            or your advertising identifier, and it is reset if you delete the App.
+          </p>
+          <p>
+            Consistent with our non-personalized advertising stance, the App explicitly
+            tells Firebase to withhold consent for advertising uses — ad storage, ad user
+            data and ad personalization are all denied — so this data is not used to
+            target advertising to you.
+          </p>
+          <p>
+            Google's processing here is governed by
+            <a href="https://policies.google.com/privacy">Google's privacy policy</a>, and
+            by the <a href="https://firebase.google.com/support/privacy">Firebase privacy
+            and security documentation</a>. If you would like the analytics and crash
+            records associated with your installation removed, email us at the address in
+            section 10 and we will take care of it.
+          </p>
+        </div>
+
+        <div>
+          <span class="num">06</span>
+          <h2>Notifications</h2>
+          <p>
+            The App may ask permission to send local notifications — reminders generated
+            on your device. It uses no remote push notifications and never registers your
+            device for a push token. You can change notification permissions at any time
+            in your device settings.
+          </p>
+        </div>
+
+        <div>
+          <span class="num">07</span>
+          <h2>Children's privacy</h2>
+          <p>
+            The App is a puzzle game for a general audience and is not directed at
+            children under 13, or the equivalent minimum age where you live. We do not
+            knowingly collect personal information from children. Because the App collects
+            no personal information from anyone and serves only non-personalized ads, it
+            is built to minimise data exposure for every user.
+          </p>
+        </div>
+
+        <div>
+          <span class="num">08</span>
+          <h2>What the App does not do</h2>
+          <p>For the avoidance of doubt, the App does not:</p>
+          <ul>
+            <li>Require or offer user accounts or logins.</li>
+            <li>Collect your name, email address, phone number, contacts, precise location, photos, camera or microphone data.</li>
+            <li>Track you across other apps or websites.</li>
+            <li>Use the advertising identifier (IDFA) for tracking, or present an App Tracking Transparency prompt.</li>
+            <li>Serve personalized or interest-based advertising.</li>
+            <li>Operate any server of ours that receives your data.</li>
+            <li>Sell or share your personal information.</li>
+          </ul>
+        </div>
+
+        <div>
+          <span class="num">09</span>
+          <h2>Your rights</h2>
+          <p>
+            We hold no personal information about you, so there is nothing on our side to
+            access, correct or delete. What is stored locally is removed by deleting the
+            App. For the anonymous analytics and crash records described in section 05,
+            email us and we will have them removed.
+          </p>
+          <p>
+            Where you live may give you rights over personal data — under the EU or UK
+            GDPR, or comparable laws. For the processing carried out by Google
+            (advertising, analytics) and Apple (purchases), those companies are the
+            relevant controllers, and their policies linked above explain how to exercise
+            those rights with them directly.
+          </p>
+        </div>
+
+        <div>
+          <span class="num">10</span>
+          <h2>Changes, and how to reach us</h2>
+          <p>
+            We may update this policy. When we do, the “Last updated” date at the top
+            changes with it, and material changes are described here.
+          </p>
+          <p>Questions about any of the above go straight to the developer:</p>
+          <p style="margin-top:14px">
+            <a class="contact" href="mailto:ozgur.cetintas@yahoo.com?subject=CipherBreaker%20Privacy">
+              ozgur.cetintas@yahoo.com
+            </a>
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="panel">
+      <p class="fine">
+        CipherBreaker: Pure Deduction is an independent project. “App Store” and
+        “StoreKit” are trademarks of Apple Inc. “AdMob”, “Firebase” and “Google” are
+        trademarks of Google LLC. This policy describes the App's data practices as of
+        the date above.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <ul class="links">
+      <li><a href="../">cipherbreaker.app</a></li>
+      <li><a href="https://apps.apple.com/app/id6777961704">App Store</a></li>
+      <li><a href="../support/">Support</a></li>
+    </ul>
+    <p class="foot-url">privacy</p>
+  </footer>
+</div>
+
+<script type="module" src="/assets/presence.js"></script>
+</body>
+</html>
